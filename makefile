@@ -10,10 +10,10 @@ CFLAGS=-g
 
 all: serveur joueur
 
-joueur: joueur.o socket.o
+joueur: joueur.o socket.o shared_memory.o
 	cc $(CFLAGS) -o joueur joueur.o socket.o
 
-serveur: serveur.o socket.o
+serveur: serveur.o socket.o shared_memory.o
 	cc $(CFLAGS) -o serveur serveur.o socket.o
 
 joueur.o: joueur.c joueur.h common.h
@@ -21,6 +21,9 @@ joueur.o: joueur.c joueur.h common.h
 
 serveur.o: serveur.c serveur.h common.h
 		cc $(CFLAGS) -c serveur.c
+
+shared_memory.o: shared_memory.c shared_memory.h
+		cc $(CFLAGS) -c shared_memory.c
 
 socket.o: socket.c socket.h common.h
 		cc $(CFLAGS) -c socket.c
