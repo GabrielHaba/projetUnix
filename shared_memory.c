@@ -8,6 +8,7 @@
 
 #include "shared_memory.h"
 
+
 int creerSharedM(){
   int shmid=-1;
   if((shmid=shmget(key,SHMSIZE,SHMFLAG))<0){
@@ -31,6 +32,13 @@ void *attacherSharedM(int shmid){
 void detacherSharedM(void *addr){
   if(shmdt(addr)<0){
     perror("Erreur lors du détachement du segment de mémoire partagée !");
+    exit(6);
+  }
+}
+void supprimerSharedMemory(int shmid){
+
+  if(shmctl(shmid,SHM_RMID,NULL)<0){
+    perror("Erreur lors de la suppression du segment de mémoire partagée !");
     exit(6);
   }
 }

@@ -19,7 +19,9 @@
 
  	#define SHMSIZE = 1024;
 
-	#define SHMFLAG = IPC_CREATE;
+	#define SHMFLAG = (0644 | IPC_CREATE) ;
+
+	#define CREATE = 0;
 
 	typedef struct record{
 		char label[64];
