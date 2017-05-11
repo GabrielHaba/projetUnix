@@ -11,12 +11,13 @@
 #include <sys/sem.h>
 #include <sys/ipc.h>
 #include <stdlib.h>
+#include "common.h"
 
 #ifndef _SHARED_H_
 
-	#define _SHARED_H_
+	#define  SYSDOWN(call) ((call) == -1) ? printf("Veuillez attendre qq instants : ces données ne sont pas disponible pour le moment\n") :0
 
- 	#define SHMSIZE 1024
+	#define _SHARED_H_
 
 	#define FLAG (0644 | IPC_CREAT)
 
@@ -24,14 +25,13 @@
 
 	#define NUMSEMNBRLECTEURS 0
 
-	#define NUMSEMECRIT 1
+	#define NUMSEMDATA 1
 
-	typedef struct record{
-		char label[64];
-		void *contenu;
-	} Record;
+	typedef struct zone{
+		Joueur joueurs[4];
+	} Zone;
 
-	int creerSharedM(int);
+	int creerSharedM(int,int);
 
 	void * attacherSharedM(int);
 
@@ -39,9 +39,10 @@
 
 	void supprimerSharedMemory(int);
 
-	void  *lireSharedM(int,int,int);
+	Joueur *lireSharedM(Zone *,int *, int);
 
-	void ecrireSharedM(Zone, int, int, int, Record);
+	void ecrireSharedM(Zone*, int, Joueur*);
+
 
 	/****************Semaphore*******************/
 

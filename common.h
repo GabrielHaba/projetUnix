@@ -14,7 +14,7 @@
 
 #include    <sys/socket.h>
 #include    <sys/types.h>
-#include 	<fcntl.h>        
+#include 	<fcntl.h>
 #include	<unistd.h>
 #include 	<signal.h>
 #include    <netinet/in.h>
@@ -31,10 +31,11 @@
 	#define FALSE 0
 
 	#define  SYS(call) ((call) == -1) ?(perror(#call ":ERROR"),exit(1)) :0
-	
+
 	struct joueur {
 	    int fd ;
 	    char name[256] ;
+			int scores[3];
 	};
 	typedef struct joueur Joueur ;
 
