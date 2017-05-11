@@ -10,9 +10,9 @@
 #include <stdio.h>
 
 
-int creerSharedM(int key){
+int creerSharedM(int key,int taille){
   int shmid=-1;
-  if((shmid=shmget(key,SHMSIZE,FLAG))<0){
+  if((shmid=shmget(key,taille,FLAG))<0){
     perror("Erreur lors de la création de la mémoire partagée ! ");
     exit(6);
   }
@@ -44,8 +44,23 @@ void supprimerSharedMemory(int shmid){
   }
 }
 
-void *lireSharedM(int shmid,int setSemaphonreId){
-    /*if(down(setSemaphonreId,))*/
+Joueur *lireSharedM(Zone *addrData,int *addrShmNbrLecteurs, int setSemaphonreId){
+  int nbrLecteurs;
+  Joueur *tablJoueurs;
+  SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
+  nbrLecteurs=((*addrShmNbrLecteurs)++);
+  if(nbrLecteurs==1){
+    SYSDOWN(down(setSemaphonreId,NUMSEMDATA));
+  }
+  up(setSemaphonreId,NUMSEMNBRLECTEURS);
+  tablJoueurs=addrData->joueurs;
+  SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
+  nbrLecteurs=((*addrShmNbrLecteurs)--);
+  if(nbrLecteurs==0){
+    up(setSemaphonreId,NUMSEMDATA);
+  }
+  up(setSemaphonreId,NUMSEMNBRLECTEURS);
+  return tablJoueurs;
 }
 
 /***************************SEMAPHORE*************************************/

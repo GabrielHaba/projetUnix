@@ -7,26 +7,27 @@
 ################################
 
 CFLAGS=-g
+CC=/usr/bin/cc
 
 all: serveur joueur
 
 joueur: joueur.o socket.o shared_memory.o
-	cc $(CFLAGS) -o joueur joueur.o socket.o
+	$(CC) $(CFLAGS) -o joueur joueur.o socket.o
 
 serveur: serveur.o socket.o shared_memory.o
-	cc $(CFLAGS) -o serveur serveur.o socket.o
+	$(CC) $(CFLAGS) -o serveur serveur.o socket.o
 
 joueur.o: joueur.c joueur.h common.h
-		cc $(CFLAGS) -c joueur.c
+		$(CC) $(CFLAGS) -c joueur.c
 
 serveur.o: serveur.c serveur.h common.h
-		cc $(CFLAGS) -c serveur.c
+		$(CC) $(CFLAGS) -c serveur.c
 
-shared_memory.o: shared_memory.c shared_memory.h
-		cc $(CFLAGS) -c shared_memory.c
+shared_memory.o: shared_memory.c shared_memory.h common.h
+		$(CC) $(CFLAGS) -c shared_memory.c
 
 socket.o: socket.c socket.h common.h
-		cc $(CFLAGS) -c socket.c
+		$(CC) $(CFLAGS) -c socket.c
 
 clean :
 	rm serveur
