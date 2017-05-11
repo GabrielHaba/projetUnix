@@ -44,6 +44,10 @@ void supprimerSharedMemory(int shmid){
   }
 }
 
+void *lireSharedM(int shmid,int setSemaphonreId){
+    /*if(down(setSemaphonreId,))*/
+}
+
 /***************************SEMAPHORE*************************************/
 int creerSemaphore(int key){
   int setSemId;

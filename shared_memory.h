@@ -22,7 +22,7 @@
 
 	#define CREATE 0
 
-	#define NUMSEMLECT 0
+	#define NUMSEMNBRLECTEURS 0
 
 	#define NUMSEMECRIT 0
 
@@ -39,9 +39,9 @@
 
 	void supprimerSharedMemory(int);
 
-	void lireSharedM(int);
+	void  *lireSharedM(int,int,int);
 
-	void ecrireSharedM(int);
+	void ecrireSharedM(Record);
 
 	/****************Semaphore*******************/
 
