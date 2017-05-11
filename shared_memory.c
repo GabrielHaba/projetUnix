@@ -44,8 +44,28 @@ void supprimerSharedMemory(int shmid){
   }
 }
 
-void *lireSharedM(int shmid,int setSemaphonreId){
+void *lireSharedM(int shmid,int seSemaphonreId){
     /*if(down(setSemaphonreId,))*/
+}
+
+void ecrireSharedM(Zone* shmAddr, int semaphores, Joueur[4] toWrite) {
+  Joueur* ptr ;
+  if (down(semaphores, NUMSEMDATA) < 0) {
+      printf("La mémoire n'est pas disponible pour le moment...\n");
+      return ;
+  }
+  /* Ecrire les donnees */
+  for (ptr = toWrite; ptr-toWrite < 4; ptr++) {
+    (*shmAddr) = *ptr ;
+    shmAddr++ ;
+  }
+  
+  if (up(semaphores, NUMSEMDATA) < 0) {
+      printf("La mémoire n'est pas disponible pour le moment...\n");
+      return ;
+  }
+
+
 }
 
 /***************************SEMAPHORE*************************************/

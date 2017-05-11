@@ -24,7 +24,7 @@
 
 	#define NUMSEMNBRLECTEURS 0
 
-	#define NUMSEMECRIT 0
+	#define NUMSEMECRIT 1
 
 	typedef struct record{
 		char label[64];
@@ -41,7 +41,7 @@
 
 	void  *lireSharedM(int,int,int);
 
-	void ecrireSharedM(Record);
+	void ecrireSharedM(Zone, int, int, int, Record);
 
 	/****************Semaphore*******************/
 
