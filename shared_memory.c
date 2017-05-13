@@ -43,40 +43,53 @@ void supprimerSharedMemory(int shmid){
     exit(6);
   }
 }
+int initNbrLecteurs(int *addrShmNbrLecteurs){
+  *addrShmNbrLecteurs=0;
+  return *addrShmNbrLecteurs;
+}
 
 
-Joueur *lireSharedM(Zone *addrData,int *addrShmNbrLecteurs, int setSemaphonreId){
+Zone lireSharedM(Zone *addrData,int *addrShmNbrLecteurs, int setSemaphonreId){
   int nbrLecteurs;
-  Joueur *tablJoueurs;
+  Zone memoire;
   SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
   nbrLecteurs=((*addrShmNbrLecteurs)++);
   if(nbrLecteurs==1){
     SYSDOWN(down(setSemaphonreId,NUMSEMDATA));
   }
   up(setSemaphonreId,NUMSEMNBRLECTEURS);
-  tablJoueurs=addrData->joueurs;
+  memoire=*addrData;
   SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
   nbrLecteurs=((*addrShmNbrLecteurs)--);
   if(nbrLecteurs==0){
     up(setSemaphonreId,NUMSEMDATA);
   }
   up(setSemaphonreId,NUMSEMNBRLECTEURS);
-  return tablJoueurs;
+  return memoire;
 }
 
-void ecrireSharedM(Zone* shmAddr, int semaphores, Joueur* toWrite) {
-  Joueur* ptr ;
+void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite) {
+
   int i = 0 ;
   if (down(semaphores, NUMSEMDATA) < 0) {
       printf("La mémoire n'est pas disponible pour le moment...\n");
       return ;
   }
   /* Ecrire les donnees */
-  for (ptr = toWrite; ptr-toWrite < 4; ptr++) {
-    (shmAddr->joueurs)[i] = *ptr ;
-    i += 1 ;
+  if(cas==1){
+    Joueur *ptr;
+    for (ptr =(Joueur *) toWrite; ptr- ((Joueur *) toWrite) < 4; ptr++) {
+      (shmAddr->joueurs)[i] = *ptr ;
+      i += 1 ;
+    }
+  }else{
+    Carte *ptrCarte;
+    for (ptrCarte =(Carte *) toWrite; ptrCarte- ((Carte *)toWrite) < 4; ptrCarte++) {
+      (shmAddr->pli)[i] = *ptrCarte ;
+      i += 1 ;
+    }
   }
-  
+
   if (up(semaphores, NUMSEMDATA) < 0) {
       printf("La mémoire n'est pas disponible pour le moment...\n");
       return ;
@@ -93,6 +106,19 @@ int creerSemaphore(int key){
     exit(7);
   }
   return setSemId;
+}
+/*us correspond a unsigned short -> voir common.h*/
+void initSemaphore(int setSemId, us *sem_val_init){
+  if( semctl(setSemId,0,SETALL,sem_val_init) < 0 ){
+    	perror("Erreur lors de l'initialisation des semaphores");
+		  exit(7);
+	}
+}
+void getValueSems(int setSemId, us *values){
+  if( semctl(setSemId,0,GETALL,values) < 0 ){
+     perror("Erreur lors de la récuprération des valeurs des semaphores");
+     exit(7);
+ }
 }
 
 int up(int setId,int numSemaphore){

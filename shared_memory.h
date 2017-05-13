@@ -29,6 +29,7 @@
 
 	typedef struct zone{
 		Joueur joueurs[4];
+		Carte pli[4];
 	} Zone;
 
 	int creerSharedM(int,int);
@@ -39,14 +40,20 @@
 
 	void supprimerSharedMemory(int);
 
-	Joueur *lireSharedM(Zone *,int *, int);
+	int initNbrLecteurs(int *);
 
-	void ecrireSharedM(Zone*, int, Joueur*);
+	Zone lireSharedM(Zone *,int *, int);
+
+	void ecrireSharedM(Zone*, int,int,void *);
 
 
 	/****************Semaphore*******************/
 
 	int creerSemaphore(int);
+
+	void getValueSems(int, us *);
+
+	void initSemaphore(int, us *);
 
 	int up(int,int);
 

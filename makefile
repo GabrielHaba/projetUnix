@@ -12,10 +12,10 @@ CC=/usr/bin/cc
 all: serveur joueur
 
 joueur: joueur.o socket.o shared_memory.o
-	$(CC) $(CFLAGS) -o joueur joueur.o socket.o
+	$(CC) $(CFLAGS) -o joueur joueur.o socket.o shared_memory.o
 
 serveur: serveur.o socket.o shared_memory.o
-	$(CC) $(CFLAGS) -o serveur serveur.o socket.o
+	$(CC) $(CFLAGS) -o serveur serveur.o socket.o shared_memory.o
 
 joueur.o: joueur.c joueur.h common.h
 		$(CC) $(CFLAGS) -c joueur.c

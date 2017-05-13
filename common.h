@@ -38,5 +38,12 @@
 			int scores[3];
 	};
 	typedef struct joueur Joueur ;
+	struct carte {
+		int valeur;
+		enum couleurs {p,ca,co,t} couleur;
+	};
+	typedef struct carte Carte ;
+
+	typedef unsigned short us;
 
 #endif
