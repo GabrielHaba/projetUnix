@@ -76,18 +76,26 @@ void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite) {
       return ;
   }
   /* Ecrire les donnees */
-  if(cas==1){
+  if (cas == NBRE_JOUEURS) {
+    shmAddr->nbrJoueurs = *((int*)toWrite) ;
+  }
+  else if (cas == JOUEURS) {
     Joueur *ptr;
     for (ptr =(Joueur *) toWrite; ptr- ((Joueur *) toWrite) < 4; ptr++) {
       (shmAddr->joueurs)[i] = *ptr ;
       i += 1 ;
     }
-  }else{
+  }
+  else if (cas == CARTES) {
     Carte *ptrCarte;
     for (ptrCarte =(Carte *) toWrite; ptrCarte- ((Carte *)toWrite) < 4; ptrCarte++) {
       (shmAddr->pli)[i] = *ptrCarte ;
       i += 1 ;
     }
+  }
+  else {
+    printf("Action inconne...\n");
+    return  ;
   }
 
   if (up(semaphores, NUMSEMDATA) < 0) {

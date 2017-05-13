@@ -33,3 +33,4 @@ clean :
 	rm serveur
 	rm joueur
 	rm *.o
+	./remove_ipc.sh

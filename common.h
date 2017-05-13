@@ -35,7 +35,7 @@
 	struct joueur {
 	    int fd ;
 	    char name[256] ;
-			int scores[3];
+		int scores[3];
 	};
 	typedef struct joueur Joueur ;
 	struct carte {

@@ -27,7 +27,15 @@
 
 	#define NUMSEMDATA 1
 
+	/* Permet de savoir ce qu'on ecrit */
+	#define NBRE_JOUEURS 0
+
+	#define JOUEURS 1
+
+	#define CARTES 2
+
 	typedef struct zone{
+		int nbrJoueurs ;
 		Joueur joueurs[4];
 		Carte pli[4];
 	} Zone;

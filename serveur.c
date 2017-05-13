@@ -185,11 +185,13 @@ int main(int argc, char **argv){
     printf("nbrLecteurs initial %d\n",nbrLecteurs);
 
     /*ETAPE 5 -> ECRITURE DANS MEMOIRE PARTAGEE DE DONNEES */
-    ecrireSharedM(memoirePtr,setSemId,1,joueurs);
+    ecrireSharedM(memoirePtr, setSemId, NBRE_JOUEURS, &nbrJoueurs);
+    ecrireSharedM(memoirePtr, setSemId, JOUEURS, joueurs);
 
     /*ETAPE 6 -> LECTURE DANS LA MEMOIRE */
       memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemId);
-      for(i=0;i<nbrJoueurs;i++){
+      printf("Il y a %d joueurs inscrits a la partie\n", memoire.nbrJoueurs);
+      for (i = 0; i < nbrJoueurs; i++) {
         printf("Le joueur %s est stocké en SH\n",memoire.joueurs[i].name);
       }
 

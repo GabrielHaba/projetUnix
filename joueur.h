@@ -6,6 +6,7 @@
  *					  Nuez Soriano, Diego
  ****************************************/
 
+#include "shared_memory.h"
 
 #ifndef _JOUEUR_H_
 
@@ -20,5 +21,7 @@
 	void ctrl_c_handler(int);
 
 	void display_welcome();
+
+	void afficher_joueurs(Zone*, int*, int);
 
 #endif
