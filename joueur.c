@@ -9,11 +9,13 @@
 #include    "common.h"
 #include    "joueur.h"
 #include    "socket.h"
+#include    "carte.h"
 
 
-int main(int argc, char** argv) {   
+int main(int argc, char** argv) {
     int sck, port, nr, keySem, keyShData, keyShNbrLect, setSemId;
-    int shmidData, shmidNbrLecteurs, i ;
+    int shmidData, shmidNbrLecteurs, i, nbrJoueurs, nbrCartes ;
+    Carte* mesCartes ;
     us sem_val_init[2]={1,1};
     us sem_values[2];
     struct sockaddr_in addr;
@@ -48,7 +50,7 @@ int main(int argc, char** argv) {
     }
     /* Remplacement du \n par \0 */
     input[strlen(input)-1] = '\0';
-    
+
     /* Initialisation du socket + connexion au server */
     sck = initializeClient(argv[1], argv[2]);
 
@@ -66,8 +68,8 @@ int main(int argc, char** argv) {
 
     printf("%s\n",reponseServer);
 
-    /* Une fois inscrit, il faut signaler au server 
-     * toute deconnexion eventuelle pour qu'il 
+    /* Une fois inscrit, il faut signaler au server
+     * toute deconnexion eventuelle pour qu'il
      * désinscrive le joueur */
     SYS(sigaction(SIGINT, &sigCtrlC, NULL)) ;
 
@@ -85,57 +87,66 @@ int main(int argc, char** argv) {
         printf("Les inscriptions sont terminées ...\n");
     }
 
-    /* TEST des semaphores */
-	printf("\n=== TEST DES SEMAPHORES ===\n");
-	/* ETAPE 1 --> Obtenir une clé pour les semaphores */
-	keySem = ftok(".",1);
-    printf("\nLa cle SEM est %d \n", keySem);
+    printf("\n%s\n", reponseServer);
+
+    /* === Initialisation des semaphores et de la memoire partagee === */
+    /* 1) Semaphores */
+    /* ETAPE 1 --> Obtenir une clé pour les semaphores */
+    keySem = ftok(".",1);
 
     /* ETAPE 2 --> Creation des semaphores */
     setSemId = creerSemaphore(keySem);
-    printf("Le setSemId est %d \n", setSemId);
 
     /* ETAPE 3 --> Initialisation des semaphores */
     initSemaphore(setSemId, sem_val_init);
 
-	/*ETAPE 4 --> Verification des valeurs des semaphores */
-    getValueSems(setSemId,sem_values);
-    printf("sem nbrLecteurs : %d, sem data : %d\n", sem_values[0], sem_values[1]);
-
-
-    /* TEST de la memoire partagee */    
-    printf("\n=== TEST DE LA MEMOIRE PARTAGEE ===\n");
+    /* 2) Memoire partagee */
     /* ETAPE 1 --> Obtenir une clé pour la SH */
     keyShData = ftok(".",2);
-    printf("\nLa cle ShData est %d \n", keyShData);
-
     keyShNbrLect = ftok(".",3);
-    printf("La cle shNbrLect est %d \n", keyShNbrLect);
 
     /* ETAPE 2 --> Recuperation des memoires partagees */
-	shmidData = creerSharedM(keyShData, sizeof(Zone));
-    printf("Le shmidData est %d \n",shmidData);
-
+    shmidData = creerSharedM(keyShData, sizeof(Zone));
     shmidNbrLecteurs= creerSharedM(keyShNbrLect, sizeof(int));
-    printf("Le shmidNbrLecteurs est %d \n", shmidNbrLecteurs);
 
-	/*ETAPE 3 --> Attachement des memoires */
+    /*ETAPE 3 --> Attachement des memoires */
     memoirePtr = (Zone *) attacherSharedM(shmidData);
 
     nbrLecteursPtr = (int *) attacherSharedM(shmidNbrLecteurs);
 
     /*ETAPE 4 -> Lecture dans la memoire */
     memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemId);
-    printf("Il y a %d joueurs inscrits a la partie\n", memoire.nbrJoueurs);
-    for (i = 0; i < memoire.nbrJoueurs; i++) {
-        printf("Le joueur %s est stocké en SH\n",memoire.joueurs[i].name);
-    }
+    nbrJoueurs = memoire.nbrJoueurs ;
+
     afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
+
+    /* ========================== */
+    /* === Debut d'une manche === */
+    /* ========================== */
+
+    nbrCartes = 60 / nbrJoueurs ;
+    /* Reception des cartes */
+    if ((mesCartes = (Carte*)malloc(sizeof(Carte)*nbrCartes)) == NULL){
+      perror("Erreur d'allocation...");
+      exit(10);
+    }
+    /* lecture des cartes sur le socket */
+    if (read(sck, mesCartes, sizeof(Carte)*nbrCartes) == -1){
+        perror("Erreur de reception des cartes...\n");
+        exit(3);
+    }
+    afficherCartes(mesCartes, nbrCartes);
+
+
 
  exit(0);
 }
 
-void err_handler(int unused){   
+/* ======================================================================= */
+
+/* === Fonctions ===*/
+
+void err_handler(int unused){
     fprintf(stderr,"Connection broken !\n");
     return;
 }
@@ -143,8 +154,6 @@ void err_handler(int unused){
 void ctrl_c_handler(int signal){
     printf("\nDesinscription ...\n");
     return;
-    // envoyer un signal au server pour signaler l'arret
-
 }
 
 void display_welcome(){

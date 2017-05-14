@@ -11,11 +11,11 @@ CC=/usr/bin/cc
 
 all: serveur joueur
 
-joueur: joueur.o socket.o ipc.o
-	$(CC) $(CFLAGS) -o joueur joueur.o socket.o ipc.o
+joueur: joueur.o socket.o ipc.o carte.o
+	$(CC) $(CFLAGS) -o joueur joueur.o socket.o ipc.o carte.o
 
-serveur: serveur.o socket.o ipc.o
-	$(CC) $(CFLAGS) -o serveur serveur.o socket.o ipc.o
+serveur: serveur.o socket.o ipc.o carte.o
+	$(CC) $(CFLAGS) -o serveur serveur.o socket.o ipc.o carte.o
 
 joueur.o: joueur.c joueur.h common.h
 		$(CC) $(CFLAGS) -c joueur.c
@@ -28,6 +28,9 @@ ipc.o: ipc.c ipc.h common.h
 
 socket.o: socket.c socket.h common.h
 		$(CC) $(CFLAGS) -c socket.c
+
+carte.o: carte.c carte.h common.h
+	$(CC) $(CFLAGS) -c carte.c
 
 clean :
 	rm serveur

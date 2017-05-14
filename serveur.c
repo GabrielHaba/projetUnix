@@ -10,13 +10,15 @@
 #include "serveur.h"
 #include "socket.h"
 #include "ipc.h"
+#include "carte.h"
 
 static int pret = FALSE;
 
 int main(int argc, char **argv){
     int sck, port, sckJoueur, nbreLu, i, j, nbreFd, keySHData, keySHNbrLecteurs;
     int shmidData, shmidNbrLecteurs, keySEM, setSemId, nbrLecteurs;
-    int reponseDesinscription, nbrJoueurs = 0;
+    int reponseDesinscription, nbreToSend, nbrJoueurs = 0;
+    Carte* jeuDeCarte ;
     us sem_val_init[2]={1,1};
     us sem_values[2];
     Zone *memoirePtr;
@@ -133,71 +135,85 @@ int main(int argc, char **argv){
 
 
     }
-    /* Affichage de la liste des joueurs [TEMPORAIRE] --> permet de vérifier l'inscription */
-    fprintf(stdout, "Inscription finie\nIl y a %d joueurs : \n",nbrJoueurs);
-    for(i = 0; i < nbrJoueurs; i++){
-        printf("\t%s avec le fd %d\n",joueurs[i].name,joueurs[i].fd);
-    }
 
-    /***************************************************************/
-    /*TEST SEMAPHORE*/
-    printf("\nSEMAPHORES\n");
-    /*ETAPE 1 -> OBTENTION CLE */
+    /* === Initialisation des sockets et de la memoire partagee ===
+     * 1) Semaphores
+     * ETAPE 1 --> Obtention de la cle */
     keySEM = ftok(".",1);
-    printf("\nLa cle SEM est %d \n",keySEM);
 
-    /*ETAPE 2 -> CREATION DES SEMAPHORES */
+    /*ETAPE 2 --> Creation des semaphores */
     setSemId = creerSemaphore(keySEM);
-    printf("Le setSemId est %d \n",setSemId);
 
-    /*ETAPE 3 -> INITIALISER SEMAPHORES */
+    /*ETAPE 3 --> Initialisation des semaphores */
     initSemaphore(setSemId,sem_val_init);
 
-    /*ETAPE 4 -> VERIFICATION DES VALEURS SEMAPHORES */
-    getValueSems(setSemId,sem_values);
-    printf("sem nbrLecteurs : %d, sem data : %d\n",sem_values[0],sem_values[1]);
-
-
-    /*****************************************************/
-    /*TEST MEMOIRE PARTAGEE*/
-    printf("\nMEMOIRES PARTAGEES\n");
-    /*ETAPE 1 -> OBTENTION CLES POUR LES 2 SH */
+    /* 2) Memoire partagee
+     * ETAPE 1 --> Obtention des cles pour les deux shm */
     keySHData = ftok(".",2);
-    printf("\nLa cle SHData est %d \n",keySHData);
-
     keySHNbrLecteurs = ftok(".",3);
-    printf("La cle SHNbrLecteurs est %d \n",keySHNbrLecteurs);
 
-    /*ETAPE 2 -> CREATION MEMOIRES PARTAGEES*/
+    /* ETAPE 2 --> Creation des deux memoires partagees */
     shmidData = creerSharedM(keySHData,sizeof(Zone));
-    printf("Le shmidData est %d \n",shmidData);
-
     shmidNbrLecteurs= creerSharedM(keySHNbrLecteurs,sizeof(int));
-    printf("Le shmidNbrLecteurs est %d \n",shmidNbrLecteurs);
 
-    /*ETAPE 3 -> ATTACHEMENT DES MEMOIRES */
+    /* ETAPE 3 --> Attachement des memoires */
     memoirePtr = (Zone *) attacherSharedM(shmidData);
-
     nbrLecteursPtr = (int *) attacherSharedM(shmidNbrLecteurs);
 
-    /*ETAPE 4 -> INITIALISER NBR DE LECTEURS DANS 2EME MEMOIRE PARTAGEE */
+    /*ETAPE 4 --> Initialisation nbreJoueurs dans la 2e memoire */
     nbrLecteurs = initNbrLecteurs(nbrLecteursPtr);
-    printf("nbrLecteurs initial %d\n",nbrLecteurs);
 
-    /*ETAPE 5 -> ECRITURE DANS MEMOIRE PARTAGEE DE DONNEES */
+    /*ETAPE 5 --> Ecriture des donness dans la shm */
     ecrireSharedM(memoirePtr, setSemId, NBRE_JOUEURS, &nbrJoueurs);
     ecrireSharedM(memoirePtr, setSemId, JOUEURS, joueurs);
 
-    /*ETAPE 6 -> LECTURE DANS LA MEMOIRE */
-      memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemId);
-      printf("Il y a %d joueurs inscrits a la partie\n", memoire.nbrJoueurs);
-      for (i = 0; i < nbrJoueurs; i++) {
-        printf("Le joueur %s est stocké en SH\n",memoire.joueurs[i].name);
+    /* Allocation de la zone memoire qui va contenir le deck */
+    if ((jeuDeCarte = (Carte*)malloc(sizeof(Carte)*60)) == NULL){
+      perror("Erreur d'allocation...");
+      exit(10);
+    }
+
+    /* ===================================================================
+     * =                         DEBUT DE PARTIE                         =
+     * =================================================================== */
+
+     // Il faut envoyer un message aux joueurs leur disant que la partie commence
+
+     sprintf(reponse, "\n%s\n", DEBUT_PARTIE);
+     for (i = 0; i < nbrJoueurs; i++) {
+       if (write(joueurs[i].fd, reponse, sizeof(reponse)) != sizeof(reponse)) {
+            perror("Erreur lors de l'envoi du message de debut de partie...\n");
+            exit(3);
+       }
+     }
+
+    /* ============================= */
+    /* === Phase de distribution === */
+    /* ============================= */
+
+    srand(time(NULL)); /* Permet d'avoir une valeur aleatoire */
+
+    /* Initialisation du jeu de cartes + melange des cartes */
+    initJeu(&jeuDeCarte) ;
+
+    /* On determine la taille des tableaux de cartes à envoyer ...*/
+    nbreToSend = 60 / nbrJoueurs ;
+    /* Distribution des cartes aux joueurs */
+    for (i = 0 ; i < nbrJoueurs ; i++){
+      Carte toSend[nbreToSend];
+      memcpy(toSend, &jeuDeCarte[nbreToSend*i], nbreToSend * sizeof(Carte));
+      if (write(joueurs[i].fd, toSend, sizeof(Carte)*nbreToSend) != sizeof(Carte)*nbreToSend) {
+           perror("Erreur lors de l'envoi des cartes...\n");
+           exit(77);
       }
-
-
+    }
     exit(0);
 }
+
+/* ======================================================================= */
+
+/* === Fonctions ===*/
+
 
 /* Indique que plus de 30 secondes sont passees */
 void handlerAlarm(){
