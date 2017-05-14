@@ -6,12 +6,12 @@
  *					  Nuez Soriano, Diego
  ****************************************/
 
-#include "shared_memory.h"
+#include "ipc.h"
 
 #ifndef _JOUEUR_H_
 
 	#define _JOUEUR_H_
-	
+
 	#define SIZE  255
 
  	#define DESINSCRIPTION -1

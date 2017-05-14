@@ -1,5 +1,5 @@
 /****************************************
- *	Fichier d'entete de shared_memory.h
+ *	Fichier d'entete de ipc.h
  *	Projet UNIX
  *  Serie 1
  *							Haba, Gabriel
@@ -15,7 +15,7 @@
 
 #ifndef _SHARED_H_
 
-	#define  SYSDOWN(call) ((call) == -1) ? printf("Veuillez attendre qq instants : ces données ne sont pas disponible pour le moment\n") :0
+	#define  SYSDOWN(call) ((call) == -1) ? printf("Veuillez attendre qq instants : ces données ne sont pas disponibles pour le moment\n") :0
 
 	#define _SHARED_H_
 

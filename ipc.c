@@ -1,12 +1,12 @@
 /****************************************
- *  Fichier shared_memory.c
+ *  Fichier ipc.c
  *  Projet UNIX
  *  Serie 1
  *                          Haba, Gabriel
  *                    Nuez Soriano, Diego
  ****************************************/
 
-#include "shared_memory.h"
+#include "ipc.h"
 #include <stdio.h>
 
 
@@ -94,7 +94,7 @@ void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite) {
     }
   }
   else {
-    printf("Action inconne...\n");
+    printf("Action inconnue...\n");
     return  ;
   }
 

@@ -9,7 +9,7 @@
 #include "common.h"
 #include "serveur.h"
 #include "socket.h"
-#include "shared_memory.h"
+#include "ipc.h"
 
 static int pret = FALSE;
 
