@@ -24,4 +24,8 @@
 
 	void afficher_joueurs(Zone*, int*, int);
 
+	void ecarterCartes(Carte**, Carte*, int);
+
+	int isValidNumber(char*);
+
 #endif

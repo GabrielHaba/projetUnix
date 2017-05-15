@@ -30,6 +30,8 @@
 
 	#define FALSE 0
 
+	#define A_ECARTER 5
+
 	#define  SYS(call) ((call) == -1) ?(perror(#call ":ERROR"),exit(1)) :0
 
 	struct joueur {

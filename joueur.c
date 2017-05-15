@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
     int sck, port, nr, keySem, keyShData, keyShNbrLect, setSemId;
     int shmidData, shmidNbrLecteurs, i, nbrJoueurs, nbrCartes ;
     Carte* mesCartes ;
+    Carte ecartee[5] ;
     us sem_val_init[2]={1,1};
     us sem_values[2];
     struct sockaddr_in addr;
@@ -135,9 +136,28 @@ int main(int argc, char** argv) {
         perror("Erreur de reception des cartes...\n");
         exit(3);
     }
-    afficherCartes(mesCartes, nbrCartes);
 
-
+    /* Ecart des cartes */
+    ecarterCartes(&mesCartes, (Carte*)ecartee, nbrCartes);
+    /* Affichage des cartes à ecarter */
+    printf("Cartes envoyées :\n");
+    afficherCartes(ecartee, A_ECARTER);
+    /* Envoi des cartes au serveur */
+    if (write(sck, ecartee, sizeof(Carte)*A_ECARTER) != sizeof(Carte)*A_ECARTER){
+    	perror("Erreur d'envoi des cartes a ecarter au serveur...\n");
+    	exit(3);
+    }
+    /* Recuperation des cartes du joueur suivant */
+    if (read(sck, ecartee, sizeof(Carte)*A_ECARTER) == -1){
+        perror("Erreur de reception des cartes...\n");
+        exit(3);
+    }
+    printf("Cartes reçues :\n");
+    afficherCartes(ecartee, 5);
+    for (i = 0; i < A_ECARTER; i++){
+    	mesCartes[nbrCartes-5+i] = ecartee[i];
+    }
+	afficherCartes(mesCartes, nbrCartes);
 
  exit(0);
 }
@@ -174,6 +194,44 @@ void afficher_joueurs(Zone* memoirePtr, int* nbrLecteursPtr, int setSemId){
 	for (i = 0; i < memoire.nbrJoueurs; i++) {
         printf("%s\t\t%d\t\t%d\t\t%d\n", memoire.joueurs[i].name, memoire.joueurs[i].scores[0], memoire.joueurs[i].scores[1], memoire.joueurs[i].scores[2]);
     }
+}
 
+void ecarterCartes(Carte** mesCartes, Carte* ecartees, int nbrCartes){
+	int i, index ;
+	char input[5] ;
+	printf("=== Ecart des cartes ===\n");
+	for (i = 0; i < A_ECARTER; i++){
+		printf("\n=== Ma main ===\n");
+		afficherCartes(*mesCartes, nbrCartes);
+		printf("\nEntrez le numéro de la carte à écarter : ");
+	    fflush(0);
+	    while(TRUE){	
+			if((fgets(input, 5, stdin) != NULL) && isValidNumber(input)){
+				index = atoi(input);
+				if (index < nbrCartes && index >= 0) {
+					break ;
+				}	
+			}
+			printf("\nEntrez le numéro de la carte à écarter : ");
+	    	fflush(0) ;
+	  		}
+		/* On place la carte dans le tableau */
+		ecartees[i] = (*mesCartes)[index] ;
+		(*mesCartes)[index] = (*mesCartes)[nbrCartes-1];
+		nbrCartes-- ;
+	}
+}
 
+int isValidNumber(char* string){
+	int i ;
+	/* Si il n'y a eu qu'un \n d'entré... */
+	if (strlen(string) == 1){
+		return FALSE ;
+	}
+	for (i = 0; i < strlen(string)-1; i++){
+		if (!isdigit(string[i])){
+			return FALSE ;
+		}
+	}
+	return TRUE ;
 }

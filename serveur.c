@@ -19,6 +19,8 @@ int main(int argc, char **argv){
     int shmidData, shmidNbrLecteurs, keySEM, setSemId, nbrLecteurs;
     int reponseDesinscription, nbreToSend, nbrJoueurs = 0;
     Carte* jeuDeCarte ;
+    Carte  ecarts[MAX_JOUEURS][TAILLE_ECART];
+    Couleur couleurPayoo;
     us sem_val_init[2]={1,1};
     us sem_values[2];
     Zone *memoirePtr;
@@ -53,7 +55,7 @@ int main(int argc, char **argv){
     sigemptyset(&saServer.sa_mask);
     saServer.sa_flags = 0;
     SYS(sigaction(SIGALRM,&saServer,NULL));
-
+    FD_ZERO(&copieset);
     FD_SET(sck,&copieset);
     while (nbrJoueurs < MAX_JOUEURS) {
         struct sockaddr_in addr2;
@@ -207,6 +209,32 @@ int main(int argc, char **argv){
            exit(77);
       }
     }
+    /* ============================= */
+    /* === Phase d' écart  === */
+    /* ============================= */
+
+
+    nbreToSend=5;
+    /*Reception des écarts des joueurs*/
+
+    for(i = 0; i < nbrJoueurs ; i++){
+      if(read(joueurs[i].fd,ecarts[i], nbreToSend * sizeof(Carte))<0){
+        perror("Erreur lors de la reception des cartes écartées par les joueurs\n");
+        exit(77);
+      }
+    }
+    /*Envoie des cartes écartées par le joueur i au joueur i+1*/
+    for(i=0; i < nbrJoueurs ; i++){
+      if (write(joueurs[(i+1)%(nbrJoueurs)].fd,ecarts[i], sizeof(Carte)*nbreToSend) != sizeof(Carte)*nbreToSend) {
+           perror("Erreur lors de l'envoi des cartes...\n");
+           exit(77);
+      }
+    }
+
+    couleurPayoo = tiragePapayoo();
+
+    free(jeuDeCarte);
+
     exit(0);
 }
 
@@ -226,4 +254,7 @@ void modifyTable(Joueur table[MAX_JOUEURS], int toRemove, int taille){
     for (i = toRemove ; i < taille-1 ; i++){
         table[i] = table[i+1] ;
     }
+}
+Couleur tiragePapayoo(){
+  return (int) (rand()/(RAND_MAX+1.0)*4);
 }

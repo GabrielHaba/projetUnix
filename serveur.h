@@ -18,6 +18,8 @@
 
 	#define MAX_JOUEURS 4
 
+	#define TAILLE_ECART 5
+
  	#define INSCRIT "Vous etes inscrit"
 
 	#define DEBUT_PARTIE "La partie va commencer !"
@@ -25,5 +27,7 @@
  	void handlerAlarm();
 
  	void modifyTable(Joueur*, int, int);
+
+	Couleur tiragePapayoo();
 
 #endif

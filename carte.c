@@ -40,7 +40,7 @@ void initJeu(Carte** jeu){
 
 void afficherCartes(Carte* cartes, int taille) {
   int i ;
-  printf("\n=== Ma main ===\n");
+  printf("\n");
   for (i = 0 ; i < taille ; i++){
     printf("\t%d - %d%s\n", i,cartes[i].valeur, lesSymboles[cartes[i].couleur]);
   }
