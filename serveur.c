@@ -134,9 +134,10 @@ int main(int argc, char **argv){
                 }
             /* END default */
         } /* END Switch*/
-
-
     }
+
+    /* Suppression de l'Alarme */
+    alarm(0);
 
     /* === Initialisation des sockets et de la memoire partagee ===
      * 1) Semaphores

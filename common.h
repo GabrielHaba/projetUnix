@@ -12,6 +12,7 @@
 #include	<string.h>
 #include	<stdlib.h>
 
+#include	<ctype.h>
 #include	<sys/socket.h>
 #include	<sys/types.h>
 #include	<fcntl.h>
