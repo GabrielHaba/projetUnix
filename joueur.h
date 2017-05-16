@@ -38,4 +38,6 @@
 
 	int isValidNumber(char*);
 
+	void jouerTour(int, Carte**, int*, Zone*, int*, int);
+
 #endif

@@ -244,9 +244,14 @@ int main(int argc, char **argv){
       }
     }
 
+    // DEBUT DE LA MANCHE
+    // BOUCLE AVEC NOMBRE DE CARTE PAR JOUEUR RESTANTES
+    int premier =  0;
+    deroulementTour(&premier, nbrJoueurs,memoirePtr, joueurs, &setSemId);
+
 
     free(jeuDeCarte);
-    system("./remove_ipc.sh");
+    system("./remove_ipc.sh");  /* Retrait des ipcs */
     SYS(close(sck));
     exit(0);
 }
@@ -277,8 +282,9 @@ Couleur tiragePapayoo(){
 void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueur *joueurs, int* setSemId){
   int j, k, indexJoueur ;
   Carte carteJouee;
-  int ton_tour = 0;
-  int pli_consultable = TRUE;
+  int ton_tour = TON_TOUR;
+  int pli_consultable = PLI_CONSULTABLE;
+  int fin_tour = FIN_TOUR ;
 
     for (j = 0 ; j < nbrJoueurs; j++) {
       indexJoueur = (*numPremierJoueur + j) % nbrJoueurs ;
@@ -303,6 +309,14 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
           exit(13);
         }
       }
+  }
+
+  // On indique que le tour est terminé...
+  for (k = 0; k < nbrJoueurs; k++) {
+    if (write(joueurs[k].fd, &fin_tour, sizeof(int)) != sizeof(int)) {
+      perror("Erreur lors de l'envoi de l'avertissement de fin de tour...\n");
+      exit(13);
+    }
   }
   //DETERMINER PERDANT
   //MODIFIER PREMIER JOUEUR

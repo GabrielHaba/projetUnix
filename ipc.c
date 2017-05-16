@@ -87,7 +87,7 @@ void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite,int posi
     }
   }
   else if (cas == CARTES) {
-    //(shmAddr->pli)[i] = *toWrite;
+    (shmAddr->pli)[i] = *((Carte*) toWrite);
   }
   else {
     printf("Action inconnue...\n");

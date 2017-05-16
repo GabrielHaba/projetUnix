@@ -141,6 +141,7 @@ int main(int argc, char** argv) {
         exit(3);
     }
 
+    /* ça n'a pas beaucoup de sens de le faire ici... et L'affichage devrait se faire ailleurs , dans une fonction par exemple */
     while ((choix = lectureChoix()) != CONTINUER){
       if (choix == SCORES){
         afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
@@ -177,12 +178,16 @@ int main(int argc, char** argv) {
       exit(3);
   }
   printf("\nLa couleur du Papayoo est le %s !\n", lesSymboles[couleurPayoo]);
-//  jouerTour()
 
+  // DEBUT DE LA MANCHE
+  // BOUCLE AVEC NOMBRE DE CARTE
+  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemId);
 
  exit(0);
 }
 
+/* ======================================================================= */
+/* ======================================================================= */
 /* ======================================================================= */
 
 /* === Fonctions ===*/
@@ -227,15 +232,15 @@ void ecarterCartes(Carte** mesCartes, Carte* ecartees, int nbrCartes){
 		printf("\nEntrez le numéro de la carte à écarter : ");
 	    fflush(0);
 	    while(TRUE){
-			if((fgets(input, 5, stdin) != NULL) && isValidNumber(input)){
-				index = atoi(input);
-				if (index < nbrCartes && index >= 0) {
-					break ;
-				}
-			}
-			printf("\nEntrez le numéro de la carte à écarter : ");
-	    	fflush(0) ;
-	  		}
+  			if((fgets(input, 5, stdin) != NULL) && isValidNumber(input)){
+  				index = atoi(input);
+  				if (index < nbrCartes && index >= 0) {
+  					break ;
+  				}
+  			}
+  			printf("\nEntrez le numéro de la carte à écarter : ");
+  	    fflush(0) ;
+	  	}
 		/* On place la carte dans le tableau */
 		ecartees[i] = (*mesCartes)[index] ;
 		(*mesCartes)[index] = (*mesCartes)[nbrCartes-1];
@@ -274,6 +279,96 @@ int lectureChoix(){
   }
 }
 
+
+void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemId){
+    fd_set fdSet, copieset ;
+    int nbreFd, action, index, toDo ;
+    Carte carte ;
+    char input[SIZE] ;
+    /* Initialisation des fdset*/
+    FD_ZERO(&copieset) ;
+    FD_SET(sck, &copieset);
+    FD_SET(STDIN, &copieset);
+
+    while (TRUE){
+      FD_ZERO(&fdSet);
+      fdSet = copieset ;
+      printf("C'est bientôt votre tour...\n");
+      printf("\n=== ACTIONS ===\n\t1 - Afficher les scores\n\t2 - Consulter le pli en cours\n");
+      printf("Votre choix : ");
+      fflush(0);
+      switch((nbreFd=select(sck+1, &fdSet, NULL, NULL, NULL))){
+        case -1 :
+          perror("Erreur du select...\n");
+          exit(4);
+
+        default :
+          /* === CAS OU L'UTILISATEUR ENTRE QUELQUE CHOSE AU CLAVIER === */
+          if (FD_ISSET(STDIN, &fdSet)){
+            if (read(STDIN, input, sizeof(char)*SIZE) < 0){
+              perror("Erreur de lecture de l'action...\n");
+            }
+            printf("INPUTED : %s\n", input);
+            if (!isValidNumber(input)){
+              printf("Action inconnue...\n");
+              continue ;
+            }
+            toDo = atoi(input);
+            if (toDo = SCORES) {
+              afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
+            }
+            else { // Afficher le pli
+              // Faire fonction afficher pli
+            }
+          } /* Fin input joueur */
+          /* CAS OU LE SERVEUR SIGNALE AU JOUEUR QUE C'EST SON TOUR === */
+
+          /* REMARQUE :
+           * On pourrait definir des macros telles que TON_TOUR, FIN_TOUR
+           * ayant une valeur entière pour différencier les différentes action
+           * à faire.
+           */
+          else {
+            if (read(sck, &action, sizeof(int)) < 0){
+              perror("Erreur de lecture du signalement du tour !\n");
+              exit(8);
+            }
+            if (action == TON_TOUR) {
+              printf("\nC'est à votre tour de joueur !\n");
+              printf("\n=== Ma main ===\n");
+              afficherCartes(*mesCartes, *nbrCartes);
+              /* Lecture du numero de la carte a envoyer */
+              while(TRUE){
+                printf("\nChoississez une carte à joueur : ");
+                fflush(0);
+          			if((fgets(input, SIZE, stdin) != NULL) && isValidNumber(input)){
+          				index = atoi(input);
+          				if (index < (*nbrCartes) && index >= 0) {
+          					break ;
+          				}
+          			}
+        	  	}
+              /* L'index est valide, et on récupère et on envoie la carte */
+              carte = (*mesCartes)[index] ;
+              if (write(sck, &carte, sizeof(Carte)) != sizeof(Carte)){
+                perror("Erreur d'envoi de la carte jouée...\n");
+                exit(4);
+              }
+              (*nbrCartes) -= 1 ;
+          } /*FIN TON_TOUR*/
+          else if (action == PLI_CONSULTABLE){
+            printf("Le pli a été mis à jour et est consultable\n");
+            fflush(0);
+          }
+          else { /* --> Fin du tour */
+            printf("FIN du tour\n");
+            fflush(0);
+            return ;
+          }
+        }
+      }
+    }
+}
 /*
 int lecture(int sck,fd_set copieset){
   fd_set fdSet;
