@@ -7,6 +7,7 @@
  ****************************************/
 
 #include	<arpa/inet.h>
+#include "ipc.h"
 
 #ifndef _SERVEUR_H_
 
@@ -29,5 +30,7 @@
  	void modifyTable(Joueur*, int, int);
 
 	Couleur tiragePapayoo();
+
+	void deroulementTour(int *, int, Zone *, Joueur *, int*);
 
 #endif

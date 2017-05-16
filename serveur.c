@@ -98,6 +98,9 @@ int main(int argc, char **argv){
                     printf("Inscription de %s en cours ...\n", reponse);
                     strcpy(joueur.name, reponse);
                     joueur.fd = sckJoueur;
+                    for (i = 0; i < NBRE_MANCHE; i++){
+                      joueur.scores[i] = 0 ;
+                    }
                     joueurs[nbrJoueurs] = joueur;
                     printf("Inscription reussie !\n");
                     /* Envoie de la reponse */
@@ -167,8 +170,8 @@ int main(int argc, char **argv){
     nbrLecteurs = initNbrLecteurs(nbrLecteursPtr);
 
     /*ETAPE 5 --> Ecriture des donness dans la shm */
-    ecrireSharedM(memoirePtr, setSemId, NBRE_JOUEURS, &nbrJoueurs);
-    ecrireSharedM(memoirePtr, setSemId, JOUEURS, joueurs);
+    ecrireSharedM(memoirePtr, setSemId, NBRE_JOUEURS, &nbrJoueurs,0);
+    ecrireSharedM(memoirePtr, setSemId, JOUEURS, joueurs,0);
 
     /* Allocation de la zone memoire qui va contenir le deck */
     if ((jeuDeCarte = (Carte*)malloc(sizeof(Carte)*60)) == NULL){
@@ -215,7 +218,7 @@ int main(int argc, char **argv){
     /* ============================= */
 
 
-    nbreToSend=5;
+    nbreToSend = 5;
     /*Reception des écarts des joueurs*/
 
     for(i = 0; i < nbrJoueurs ; i++){
@@ -233,9 +236,18 @@ int main(int argc, char **argv){
     }
 
     couleurPayoo = tiragePapayoo();
+    /* On previent le joueur de la couleur Papayoo -------> shm? */
+    for(i = 0; i < nbrJoueurs ; i++){
+      if (write(joueurs[i].fd, &couleurPayoo, sizeof(Couleur)) != sizeof(Couleur)) {
+           perror("Erreur lors de l'envoi des cartes...\n");
+           exit(77);
+      }
+    }
+
 
     free(jeuDeCarte);
-
+    system("./remove_ipc.sh");
+    SYS(close(sck));
     exit(0);
 }
 
@@ -256,6 +268,42 @@ void modifyTable(Joueur table[MAX_JOUEURS], int toRemove, int taille){
         table[i] = table[i+1] ;
     }
 }
+
 Couleur tiragePapayoo(){
   return (int) (rand()/(RAND_MAX+1.0)*4);
+}
+
+
+void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueur *joueurs, int* setSemId){
+  int j, k, indexJoueur ;
+  Carte carteJouee;
+  int ton_tour = 0;
+  int pli_consultable = TRUE;
+
+    for (j = 0 ; j < nbrJoueurs; j++) {
+      indexJoueur = (*numPremierJoueur + j) % nbrJoueurs ;
+      // demander au joueur j de jouer une carte
+      if (write(joueurs[indexJoueur].fd, &ton_tour, sizeof(int)) != sizeof(int)) {
+         perror("Erreur lors de l'envoi de l'invitation à jouer...\n");
+         exit(13);
+       }
+      /* Lire la carte jouee par le joueur j */
+      if(read(joueurs[indexJoueur].fd, &carteJouee, sizeof(Carte)) < 0){
+        perror("Erreur lors de la reception de la carte jouée...\n");
+        exit(13);
+      }
+      /* Ecrire la carte en mémoire partagée à la position corresponde
+       * à celle du joueur */
+      ecrireSharedM(memoirePtr, *setSemId, CARTES, &carteJouee, indexJoueur);
+
+      /* Avertir tous les joueurs que le pli est consultable */
+      for (k = 0; k < nbrJoueurs; k++) {
+        if (write(joueurs[k].fd, &pli_consultable, sizeof(int)) != sizeof(int)) {
+          perror("Erreur lors de l'envoi de l'avertissement pli consultable...\n");
+          exit(13);
+        }
+      }
+  }
+  //DETERMINER PERDANT
+  //MODIFIER PREMIER JOUEUR
 }

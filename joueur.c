@@ -17,15 +17,19 @@ int main(int argc, char** argv) {
     int shmidData, shmidNbrLecteurs, i, nbrJoueurs, nbrCartes ;
     Carte* mesCartes ;
     Carte ecartee[5] ;
+    Couleur couleurPayoo;
     us sem_val_init[2]={1,1};
     us sem_values[2];
     struct sockaddr_in addr;
-	struct hostent *host;
+	  struct hostent *host;
     char reponseServer[256];
     char input[SIZE];
     Zone *memoirePtr;
     int *nbrLecteursPtr;
     Zone memoire;
+    int choix;
+    /*fd_set fdSet;
+    fd_set copieset;*/
 
     struct sigaction sigCtrlC ;
 
@@ -124,19 +128,27 @@ int main(int argc, char** argv) {
     /* ========================== */
     /* === Debut d'une manche === */
     /* ========================== */
-
     nbrCartes = 60 / nbrJoueurs ;
     /* Reception des cartes */
     if ((mesCartes = (Carte*)malloc(sizeof(Carte)*nbrCartes)) == NULL){
       perror("Erreur d'allocation...");
       exit(10);
     }
+
     /* lecture des cartes sur le socket */
     if (read(sck, mesCartes, sizeof(Carte)*nbrCartes) == -1){
         perror("Erreur de reception des cartes...\n");
         exit(3);
     }
 
+    while ((choix = lectureChoix()) != CONTINUER){
+      if (choix == SCORES){
+        afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
+      }
+      else{
+        printf("\nAucune carte n'a été jouée à cette manche pour le moment !\n") ;
+      }
+    }
     /* Ecart des cartes */
     ecarterCartes(&mesCartes, (Carte*)ecartee, nbrCartes);
     /* Affichage des cartes à ecarter */
@@ -158,6 +170,15 @@ int main(int argc, char** argv) {
     	mesCartes[nbrCartes-5+i] = ecartee[i];
     }
 	afficherCartes(mesCartes, nbrCartes);
+
+  /* Lecture de la couleur du Papayoo */
+  if (read(sck, &couleurPayoo, sizeof(Couleur)) == -1){
+      perror("Erreur de reception des cartes...\n");
+      exit(3);
+  }
+  printf("\nLa couleur du Papayoo est le %s !\n", lesSymboles[couleurPayoo]);
+//  jouerTour()
+
 
  exit(0);
 }
@@ -205,12 +226,12 @@ void ecarterCartes(Carte** mesCartes, Carte* ecartees, int nbrCartes){
 		afficherCartes(*mesCartes, nbrCartes);
 		printf("\nEntrez le numéro de la carte à écarter : ");
 	    fflush(0);
-	    while(TRUE){	
+	    while(TRUE){
 			if((fgets(input, 5, stdin) != NULL) && isValidNumber(input)){
 				index = atoi(input);
 				if (index < nbrCartes && index >= 0) {
 					break ;
-				}	
+				}
 			}
 			printf("\nEntrez le numéro de la carte à écarter : ");
 	    	fflush(0) ;
@@ -235,3 +256,45 @@ int isValidNumber(char* string){
 	}
 	return TRUE ;
 }
+
+
+int lectureChoix(){
+  char buffer[SIZE];
+  int nr;
+  printf("\n=== ACTIONS ===\n\t1 - Afficher les scores\n\t2 - Consulter le pli en cours\n\t3 - Continuer le jeu\n");
+  while (TRUE){
+    printf("Votre choix : ");
+    fflush(0);
+    if ((fgets(buffer, SIZE, stdin) != NULL && isValidNumber(buffer))){
+      nr = atoi(buffer);
+      if (nr > 0 && nr < 4){
+        return nr ;
+      }
+    }
+  }
+}
+
+/*
+int lecture(int sck,fd_set copieset){
+  fd_set fdSet;
+  FD_ZERO(&fdSet);
+  fdSet=copieset;
+  int nbreFd;
+  if((nbreFd=select(sck+1,&fdSet,NULL,NULL,NULL))<0){
+    perror("Erreur lors de l'ecoute au clavier ou sur le socket ...");
+    exit(15);
+  }
+  if(FD_ISSET(0,&fdSet)){
+    char buffer[256];
+    int nr;
+    if((nr=read(0,&buffer,sizeof(buffer)))<0){
+      perror("Erreur de la lecture au clavier ...");
+      exit(15);
+    }
+    if(strncmp(buffer,"SCORES",6)==0){
+      return 0;
+    }
+
+  }
+  return -1;
+}*/

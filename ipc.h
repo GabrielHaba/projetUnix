@@ -52,7 +52,7 @@
 
 	Zone lireSharedM(Zone *,int *, int);
 
-	void ecrireSharedM(Zone*, int,int,void *);
+	void ecrireSharedM(Zone*, int,int,void *,int);
 
 
 	/****************Semaphore*******************/

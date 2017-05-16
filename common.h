@@ -33,6 +33,12 @@
 
 	#define A_ECARTER 5
 
+	#define TON_TOUR 0
+
+	#define PLI_CONSULTABLE 1
+
+	#define NBRE_MANCHE 3
+
 	#define  SYS(call) ((call) == -1) ?(perror(#call ":ERROR"),exit(1)) :0
 
 	struct joueur {

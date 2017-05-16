@@ -16,6 +16,12 @@
 
  	#define DESINSCRIPTION -1
 
+	#define SCORES 1
+
+	#define PLI 2
+
+	#define CONTINUER 3
+
 	void err_handler(int);
 
 	void ctrl_c_handler(int);
@@ -25,6 +31,10 @@
 	void afficher_joueurs(Zone*, int*, int);
 
 	void ecarterCartes(Carte**, Carte*, int);
+
+	/*int lecture(int,fd_set);*/
+
+	int lectureChoix();
 
 	int isValidNumber(char*);
 

@@ -49,7 +49,7 @@ int initNbrLecteurs(int *addrShmNbrLecteurs){
 }
 
 
-Zone lireSharedM(Zone *addrData,int *addrShmNbrLecteurs, int setSemaphonreId){
+Zone lireSharedM(Zone *addrData, int *addrShmNbrLecteurs, int setSemaphonreId){
   int nbrLecteurs;
   Zone memoire;
   SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
@@ -68,9 +68,9 @@ Zone lireSharedM(Zone *addrData,int *addrShmNbrLecteurs, int setSemaphonreId){
   return memoire;
 }
 
-void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite) {
+void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite,int positionEcriture) {
 
-  int i = 0 ;
+  int i = positionEcriture ;
   if (down(semaphores, NUMSEMDATA) < 0) {
       printf("La mémoire n'est pas disponible pour le moment...\n");
       return ;
@@ -87,11 +87,7 @@ void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite) {
     }
   }
   else if (cas == CARTES) {
-    Carte *ptrCarte;
-    for (ptrCarte =(Carte *) toWrite; ptrCarte- ((Carte *)toWrite) < 4; ptrCarte++) {
-      (shmAddr->pli)[i] = *ptrCarte ;
-      i += 1 ;
-    }
+    //(shmAddr->pli)[i] = *toWrite;
   }
   else {
     printf("Action inconnue...\n");
