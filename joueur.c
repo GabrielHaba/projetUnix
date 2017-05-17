@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
     int *nbrLecteursPtr;
     Zone memoire;
     int choix;
+    int premier;
     /*fd_set fdSet;
     fd_set copieset;*/
 
@@ -142,14 +143,14 @@ int main(int argc, char** argv) {
     }
 
     /* ça n'a pas beaucoup de sens de le faire ici... et L'affichage devrait se faire ailleurs , dans une fonction par exemple */
-    while ((choix = lectureChoix()) != CONTINUER){
+    /*while ((choix = lectureChoix()) != CONTINUER){
       if (choix == SCORES){
         afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
       }
       else{
         printf("\nAucune carte n'a été jouée à cette manche pour le moment !\n") ;
       }
-    }
+    }*/
     /* Ecart des cartes */
     ecarterCartes(&mesCartes, (Carte*)ecartee, nbrCartes);
     /* Affichage des cartes à ecarter */
@@ -181,7 +182,12 @@ int main(int argc, char** argv) {
 
   // DEBUT DE LA MANCHE
   // BOUCLE AVEC NOMBRE DE CARTE
-  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemId);
+  /*Lecture du premier joueur */
+  if (read(sck, &premier, sizeof(int)) == -1){
+      perror("Erreur de reception de l indice du premier joueur...\n");
+      exit(3);
+  }
+  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemId, premier);
 
  exit(0);
 }
@@ -251,7 +257,7 @@ void ecarterCartes(Carte** mesCartes, Carte* ecartees, int nbrCartes){
 int isValidNumber(char* string){
 	int i ;
 	/* Si il n'y a eu qu'un \n d'entré... */
-	if (strlen(string) == 1){
+	if (string[0]=='\n'){
 		return FALSE ;
 	}
 	for (i = 0; i < strlen(string)-1; i++){
@@ -280,7 +286,7 @@ int lectureChoix(){
 }
 
 
-void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemId){
+void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemId,int premier){
     fd_set fdSet, copieset ;
     int nbreFd, action, index, toDo ;
     Carte carte ;
@@ -296,7 +302,7 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
       printf("C'est bientôt votre tour...\n");
       printf("\n=== ACTIONS ===\n\t1 - Afficher les scores\n\t2 - Consulter le pli en cours\n");
       printf("Votre choix : ");
-      fflush(0);
+    //  fflush(0);
       switch((nbreFd=select(sck+1, &fdSet, NULL, NULL, NULL))){
         case -1 :
           perror("Erreur du select...\n");
@@ -305,20 +311,24 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
         default :
           /* === CAS OU L'UTILISATEUR ENTRE QUELQUE CHOSE AU CLAVIER === */
           if (FD_ISSET(STDIN, &fdSet)){
-            if (read(STDIN, input, sizeof(char)*SIZE) < 0){
+            int nr;
+            if ((nr=read(STDIN, input, sizeof(char)*SIZE)) < 0){
               perror("Erreur de lecture de l'action...\n");
             }
-            printf("INPUTED : %s\n", input);
+
+
+            input[nr-1]='\0';
+
             if (!isValidNumber(input)){
               printf("Action inconnue...\n");
               continue ;
             }
             toDo = atoi(input);
-            if (toDo = SCORES) {
+            if (toDo == SCORES) {
               afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
             }
             else { // Afficher le pli
-              // Faire fonction afficher pli
+              afficherPli(memoirePtr,nbrLecteursPtr,setSemId,premier);
             }
           } /* Fin input joueur */
           /* CAS OU LE SERVEUR SIGNALE AU JOUEUR QUE C'EST SON TOUR === */
@@ -337,6 +347,8 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
               printf("\nC'est à votre tour de joueur !\n");
               printf("\n=== Ma main ===\n");
               afficherCartes(*mesCartes, *nbrCartes);
+              printf("Pli courant : \n");
+              afficherPli(memoirePtr,nbrLecteursPtr,setSemId,premier);
               /* Lecture du numero de la carte a envoyer */
               while(TRUE){
                 printf("\nChoississez une carte à joueur : ");
@@ -368,6 +380,24 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
         }
       }
     }
+}
+void afficherPli(Zone *memoirePtr,int *nbrLecteursPtr,int setSemaphonreId, int premier){
+  Zone memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemaphonreId);
+  Joueur *joueurs = memoire.joueurs;
+  Carte *pli = memoire.pli;
+  int nbrCartesPli = memoire.nbrCartesPli;
+  int nbrJoueurs = memoire.nbrJoueurs;
+  int i ;
+  printf("premier est %d\n",premier);
+  printf("nbr cartes pli %d\n",nbrCartesPli);
+  printf("\n");
+  if(nbrCartesPli==0){
+    printf("Le pli est vide pour le moment ! \n");
+  }
+  for (i = premier ; i < premier + nbrCartesPli ; i++){
+    printf("\t%s - %d%s\n", joueurs[i%nbrJoueurs].name,pli[i%nbrCartesPli].valeur, lesSymboles[pli[i%nbrCartesPli].couleur]);
+  }
+  printf("\n");
 }
 /*
 int lecture(int sck,fd_set copieset){

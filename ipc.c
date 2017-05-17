@@ -54,6 +54,7 @@ Zone lireSharedM(Zone *addrData, int *addrShmNbrLecteurs, int setSemaphonreId){
   Zone memoire;
   SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
   nbrLecteurs=((*addrShmNbrLecteurs)++);
+  printf("nbrLecteurs apres incrementation : %d\n",  nbrLecteurs );
   if(nbrLecteurs==1){
     SYSDOWN(down(setSemaphonreId,NUMSEMDATA));
   }
@@ -61,6 +62,7 @@ Zone lireSharedM(Zone *addrData, int *addrShmNbrLecteurs, int setSemaphonreId){
   memoire=*addrData;
   SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
   nbrLecteurs=((*addrShmNbrLecteurs)--);
+    printf("nbrLecteurs apres decrementation : %d\n",  nbrLecteurs );
   if(nbrLecteurs==0){
     up(setSemaphonreId,NUMSEMDATA);
   }
@@ -88,6 +90,9 @@ void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite,int posi
   }
   else if (cas == CARTES) {
     (shmAddr->pli)[i] = *((Carte*) toWrite);
+  }
+  else if (cas ==NBRE_CARTES_PLI) {
+    shmAddr->nbrCartesPli = *((int *)toWrite) ;
   }
   else {
     printf("Action inconnue...\n");
@@ -126,13 +131,13 @@ void getValueSems(int setSemId, us *values){
 }
 
 int up(int setId,int numSemaphore){
-  struct sembuf operation={numSemaphore,1,IPC_NOWAIT};
+  struct sembuf operation={numSemaphore,1};
   struct sembuf arrayOperations[1]={operation};
   return semop(setId,arrayOperations,1);
 }
 
 int down(int setId,int numSemaphore){
-  struct sembuf operation={numSemaphore,-1,IPC_NOWAIT};
+  struct sembuf operation={numSemaphore,-1};
   struct sembuf arrayOperations[1]={operation};
   return semop(setId,arrayOperations,1);
 }

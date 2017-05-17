@@ -25,6 +25,8 @@ int main(int argc, char **argv){
     us sem_values[2];
     Zone *memoirePtr;
     int *nbrLecteursPtr;
+    int premier = 0;
+    int nbrCartesPli = 0;
     Zone memoire;
     struct sockaddr_in addr;
     struct sigaction saServer;
@@ -234,6 +236,8 @@ int main(int argc, char **argv){
            exit(77);
       }
     }
+    //PROBLEME
+    ecrireSharedM(memoirePtr,setSemId ,NBRE_CARTES_PLI, &nbrCartesPli, 0);
 
     couleurPayoo = tiragePapayoo();
     /* On previent le joueur de la couleur Papayoo -------> shm? */
@@ -246,7 +250,14 @@ int main(int argc, char **argv){
 
     // DEBUT DE LA MANCHE
     // BOUCLE AVEC NOMBRE DE CARTE PAR JOUEUR RESTANTES
-    int premier =  0;
+    premier =  0;
+    //prévenir les joueurs que le premier joueur est ...
+    for(i = 0; i < nbrJoueurs ; i++){
+      if (write(joueurs[i].fd, &premier, sizeof(int)) != sizeof(premier)) {
+           perror("Erreur lors de l'envoi de l indice du premier joueur...\n");
+           exit(77);
+      }
+    }
     deroulementTour(&premier, nbrJoueurs,memoirePtr, joueurs, &setSemId);
 
 
@@ -285,6 +296,7 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
   int ton_tour = TON_TOUR;
   int pli_consultable = PLI_CONSULTABLE;
   int fin_tour = FIN_TOUR ;
+  int nbrCartesPli=0;
 
     for (j = 0 ; j < nbrJoueurs; j++) {
       indexJoueur = (*numPremierJoueur + j) % nbrJoueurs ;
@@ -298,9 +310,14 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
         perror("Erreur lors de la reception de la carte jouée...\n");
         exit(13);
       }
+
       /* Ecrire la carte en mémoire partagée à la position corresponde
        * à celle du joueur */
       ecrireSharedM(memoirePtr, *setSemId, CARTES, &carteJouee, indexJoueur);
+
+      nbrCartesPli++;
+      /*Ecrire le nbre de cartes qu'il y a dans le pli*/
+      ecrireSharedM(memoirePtr, *setSemId, NBRE_CARTES_PLI, &nbrCartesPli, indexJoueur);
 
       /* Avertir tous les joueurs que le pli est consultable */
       for (k = 0; k < nbrJoueurs; k++) {
