@@ -48,6 +48,8 @@
 	#define PLI_CONSULTABLE 1
 
 	#define FIN_TOUR 2
+	
+	#define AVERT_PERDANT 3
 
 	#define  SYS(call) ((call) == -1) ?(perror(#call ":ERROR"),exit(1)) :0
 

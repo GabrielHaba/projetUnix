@@ -33,6 +33,6 @@
 
 	void deroulementTour(int *, int, Zone *, Joueur *, int *,int *, int *);
 
-	int determinerPerdant(Zone *,int *,int *,int *,int);
+	int determinerPerdant(int, Zone *,int *,int *,int *,int);
 
 #endif

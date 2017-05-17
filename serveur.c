@@ -292,22 +292,22 @@ Couleur tiragePapayoo(){
   return (int) (rand()/(RAND_MAX+1.0)*4);
 }
 
-int determinerPerdant(Zone *memoirePtr,int *setSemIdData,int *setSemIdNbrLecteurs,int *nbrLecteursPtr,int premier){
+int determinerPerdant(int nbrJoueurs,Zone *memoirePtr,int *setSemIdData,int *setSemIdNbrLecteurs,int *nbrLecteursPtr,int premier){
   printf("DETERMINERPERDANT\n");
   Zone memoire = lireSharedM(memoirePtr, nbrLecteursPtr, *setSemIdData,*setSemIdNbrLecteurs);
   int i;
   Carte *pli = memoire.pli;
   Joueur *joueurs = memoire.joueurs;
   Couleur couleurPremiereCartePli=(pli[premier]).couleur;
-  printf("couleur %s\n",lesSymboles[couleurPremiereCartePli]);
+  
   int perdant=0;
   int valeurMaxCouleurPremiereCartePli=-1;
-  for(i=0;i<NBRE_JOUEURS;i++){
-      printf("couleur carte %s\n",lesSymboles[pli[i].couleur]);
+  for(i=0;i<nbrJoueurs;i++){
+      
       if(pli[i].couleur==couleurPremiereCartePli && pli[i].valeur>valeurMaxCouleurPremiereCartePli ){
         valeurMaxCouleurPremiereCartePli=pli[i].valeur;
         perdant=i;
-        printf("LE PERDANT EST %d\n",perdant);
+        
       }
   }
   return perdant;
@@ -317,8 +317,10 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
   Carte carteJouee;
   int ton_tour = TON_TOUR;
   int pli_consultable = PLI_CONSULTABLE;
+  int avert_perdant = AVERT_PERDANT;
   int fin_tour = FIN_TOUR ;
   int nbrCartesPli=0;
+  char nom[SIZE];
 
     for (j = 0 ; j < nbrJoueurs; j++) {
       indexJoueur = (*numPremierJoueur + j) % nbrJoueurs ;
@@ -349,8 +351,24 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
         }
       }
     }
-  *numPremierJoueur = determinerPerdant(memoirePtr,setSemIdData,setSemIdNbrLecteurs,nbrLecteursPtr,*numPremierJoueur);
-  //printf("le perdant est %s\n",joueurs[*numPremierJoueur].name);
+  //le perdant devient le premier joueur du tour suivant
+  *numPremierJoueur = determinerPerdant(nbrJoueurs,memoirePtr,setSemIdData,setSemIdNbrLecteurs,nbrLecteursPtr,*numPremierJoueur);
+  sprintf(nom,"Le perdant du tour est %s\n",joueurs[*numPremierJoueur].name);
+  printf("perdant -> premier %d\n",*numPremierJoueur);
+
+  //dire aux joueurs qui a perdu le tour
+  for(k = 0; k< nbrJoueurs; k++) {
+     if (write(joueurs[k].fd, &avert_perdant, sizeof(int)) != sizeof(int)) {
+      perror("Erreur lors de l'envoi de l'avertissement du perdant...\n");
+      exit(13);
+    }
+     if (write(joueurs[k].fd,nom, sizeof(char)*SIZE) != sizeof(char)*SIZE) {
+      perror("Erreur lors de l'envoi du nom du perdant...\n");
+      exit(13);
+    }
+
+  }
+
   // On indique que le tour est terminé...
   for (k = 0; k < nbrJoueurs; k++) {
     if (write(joueurs[k].fd, &fin_tour, sizeof(int)) != sizeof(int)) {

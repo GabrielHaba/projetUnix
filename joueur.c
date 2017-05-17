@@ -276,6 +276,7 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
     int nbreFd, action, index, toDo ;
     Carte carte ;
     char input[SIZE] ;
+    char perdant[SIZE];
     /* Initialisation des fdset*/
     FD_ZERO(&copieset) ;
     FD_SET(sck, &copieset);
@@ -356,6 +357,14 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
           else if (action == PLI_CONSULTABLE){
             printf("Le pli a été mis à jour et est consultable\n");
             fflush(0);
+          }
+          else if (action == AVERT_PERDANT){
+             // Faire read du nom du perdant, plus afficher
+            if (read(sck, perdant, sizeof(char)*SIZE) < 0) {
+              perror("Erreur de lecture du perdant...\n");
+              exit(7);
+            }
+            printf("%s\n", perdant);
           }
           else { /* --> Fin du tour */
             printf("FIN du tour\n");
