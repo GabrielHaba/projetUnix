@@ -318,9 +318,11 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
   int ton_tour = TON_TOUR;
   int pli_consultable = PLI_CONSULTABLE;
   int avert_perdant = AVERT_PERDANT;
-  int fin_tour = FIN_TOUR ;
+  int fin_tour = FIN_TOUR;
+  int perdant = PERDANT;
   int nbrCartesPli=0;
   char nom[SIZE];
+  Zone memoire;
 
     for (j = 0 ; j < nbrJoueurs; j++) {
       indexJoueur = (*numPremierJoueur + j) % nbrJoueurs ;
@@ -355,19 +357,37 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
   *numPremierJoueur = determinerPerdant(nbrJoueurs,memoirePtr,setSemIdData,setSemIdNbrLecteurs,nbrLecteursPtr,*numPremierJoueur);
   sprintf(nom,"Le perdant du tour est %s\n",joueurs[*numPremierJoueur].name);
   printf("perdant -> premier %d\n",*numPremierJoueur);
-
+  sleep(2);
   //dire aux joueurs qui a perdu le tour
   for(k = 0; k< nbrJoueurs; k++) {
      if (write(joueurs[k].fd, &avert_perdant, sizeof(int)) != sizeof(int)) {
       perror("Erreur lors de l'envoi de l'avertissement du perdant...\n");
       exit(13);
     }
-     if (write(joueurs[k].fd,nom, sizeof(char)*SIZE) != sizeof(char)*SIZE) {
+     if (write(joueurs[k].fd,nom, sizeof(char)*(SIZE-1)) != sizeof(char)*(SIZE-1)) {
       perror("Erreur lors de l'envoi du nom du perdant...\n");
       exit(13);
     }
 
   }
+   sleep(2);
+  //envoyer le pli en cours au perdant
+  printf("numero perdant : %d\n", *numPremierJoueur);
+    if (write((joueurs[*numPremierJoueur]).fd,&perdant, sizeof(int)) != sizeof(int)) {
+      perror("Erreur lors de l'envoi de l'avertissement au perdant...\n");
+      exit(13);
+    }
+    sleep(1);
+  //lecture du pli en cours
+    memoire = lireSharedM(memoirePtr, nbrLecteursPtr, *setSemIdData,*setSemIdNbrLecteurs);
+    afficherCartes(memoire.pli,nbrJoueurs);
+
+    if (write((joueurs[*numPremierJoueur]).fd, memoire.pli, sizeof(Carte)*nbrJoueurs) != sizeof(Carte)*nbrJoueurs) {
+      perror("Erreur lors de l'envoi du pli au perdant...\n");
+      exit(13);
+    }
+
+    sleep(2);
 
   // On indique que le tour est terminé...
   for (k = 0; k < nbrJoueurs; k++) {
@@ -376,6 +396,5 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
       exit(13);
     }
   }
-  //DETERMINER PERDANT
-  //MODIFIER PREMIER JOUEUR
+
 }

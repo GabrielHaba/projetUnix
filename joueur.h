@@ -38,7 +38,7 @@
 
 	int isValidNumber(char*);
 
-	void jouerTour(int, Carte**, int*, Zone*, int*, int,int,int);
+	void jouerTour(int, Carte**, int*, Zone*, int*, int, int, int, Carte*, int*, int);
 
 	void afficherPli(Zone *,int *,int,int,int);
 

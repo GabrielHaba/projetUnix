@@ -183,11 +183,13 @@ int main(int argc, char** argv) {
   // DEBUT DE LA MANCHE
   // BOUCLE AVEC NOMBRE DE CARTE
   /*Lecture du premier joueur */
+  int taille_mes_plis=0;
+  Carte mesPlis[60];
   if (read(sck, &premier, sizeof(int)) == -1){
       perror("Erreur de reception de l indice du premier joueur...\n");
       exit(3);
   }
-  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs, premier);
+  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs, premier,(Carte *) mesPlis,&taille_mes_plis,nbrJoueurs);
 
  exit(0);
 }
@@ -271,7 +273,7 @@ int isValidNumber(char* string){
 
 
 
-void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemIdData,int setSemIdNbrLecteurs,int premier){
+void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemIdData,int setSemIdNbrLecteurs,int premier,Carte *mesPlis,int *taille_mes_plis,int nbrJoueurs){
     fd_set fdSet, copieset ;
     int nbreFd, action, index, toDo ;
     Carte carte ;
@@ -325,10 +327,15 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
            * à faire.
            */
           else {
+          FD_ZERO(&fdSet);
+          fdSet = copieset ;
+            printf("je recois une action du serveur\n");
+
             if (read(sck, &action, sizeof(int)) < 0){
-              perror("Erreur de lecture du signalement du tour !\n");
-              exit(8);
+                perror("Erreur de lecture de action !\n");
+                exit(8);
             }
+            printf("\n\n\n============ L'ACTION RECUE EST %d =============\n\n\n", action);
             if (action == TON_TOUR) {
               printf("\nC'est à votre tour de joueur !\n");
               printf("\n=== Ma main ===\n");
@@ -365,7 +372,17 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
               exit(7);
             }
             printf("%s\n", perdant);
-          }
+          }  
+          else if (action == PERDANT) {
+            //Carte test[nbrJoueurs];
+            printf("Attente du pli...\n");
+            if (read(sck,mesPlis, sizeof(Carte)*nbrJoueurs) != sizeof(Carte)*nbrJoueurs){
+              perror("Erreur de lecture du pli...\n");
+              exit(7);
+            }
+            (*taille_mes_plis) += nbrJoueurs ;
+            afficherCartes(mesPlis, *taille_mes_plis);
+          } 
           else { /* --> Fin du tour */
             printf("FIN du tour\n");
             fflush(0);
