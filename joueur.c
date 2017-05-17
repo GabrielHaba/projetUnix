@@ -342,7 +342,7 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
                     afficherPli(memoirePtr,nbrLecteursPtr,setSemIdData,setSemIdNbrLecteurs,premier);
                     /* Lecture du numero de la carte a envoyer */
                     while(TRUE){
-                        printf("\nChoississez une carte à joueur : ");
+                        printf("\nChoisissez une carte à joueur : ");
                         fflush(0);
                         if((fgets(input, SIZE, stdin) != NULL) && isValidNumber(input)){
                             index = atoi(input);
@@ -357,6 +357,7 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
                         perror("Erreur d'envoi de la carte jouée...\n");
                         exit(4);
                     }
+                    (*mesCartes)[index] = (*mesCartes)[*(nbrCartes)-1];
                     (*nbrCartes) -= 1 ;
                 } /*FIN TON_TOUR*/
                 else if (action == PLI_CONSULTABLE){
