@@ -183,14 +183,20 @@ int main(int argc, char** argv) {
   // DEBUT DE LA MANCHE
   // BOUCLE AVEC NOMBRE DE CARTE
   /*Lecture du premier joueur */
-  int taille_mes_plis=0;
-  Carte mesPlis[60];
-  if (read(sck, &premier, sizeof(int)) == -1){
-      perror("Erreur de reception de l indice du premier joueur...\n");
-      exit(3);
-  }
-  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs, premier,(Carte *) mesPlis,&taille_mes_plis,nbrJoueurs);
+  int taille_mes_plis = 0, x;
+  Carte* mesPlis;
 
+    if ((mesPlis = (Carte*)malloc(sizeof(Carte)*60)) == NULL){
+        perror("Erreur d'allocation de la mémoire\n");
+    }
+  
+  for (x = 0; x < NBR_TOURS; x++){
+    if (read(sck, &premier, sizeof(int)) == -1){
+          perror("Erreur de reception de l indice du premier joueur...\n");
+          exit(3);
+    }
+    jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs, premier,(Carte *) mesPlis,&taille_mes_plis,nbrJoueurs);
+  }
  exit(0);
 }
 
@@ -320,12 +326,6 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
             }
           } /* Fin input joueur */
           /* CAS OU LE SERVEUR SIGNALE AU JOUEUR QUE C'EST SON TOUR === */
-
-          /* REMARQUE :
-           * On pourrait definir des macros telles que TON_TOUR, FIN_TOUR
-           * ayant une valeur entière pour différencier les différentes action
-           * à faire.
-           */
           else {
           FD_ZERO(&fdSet);
           fdSet = copieset ;
@@ -376,12 +376,14 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
           else if (action == PERDANT) {
             //Carte test[nbrJoueurs];
             printf("Attente du pli...\n");
-            if (read(sck,mesPlis, sizeof(Carte)*nbrJoueurs) != sizeof(Carte)*nbrJoueurs){
+            if (read(sck, (mesPlis+(*taille_mes_plis)), sizeof(Carte)*nbrJoueurs) != sizeof(Carte)*nbrJoueurs){
               perror("Erreur de lecture du pli...\n");
               exit(7);
             }
+            printf("\n\nTAILLE DE MES PLIS : %d\n", (*taille_mes_plis));
             (*taille_mes_plis) += nbrJoueurs ;
             afficherCartes(mesPlis, *taille_mes_plis);
+            printf("\n\nTAILLE DE MES PLIS : %d\n", (*taille_mes_plis));
           } 
           else { /* --> Fin du tour */
             printf("FIN du tour\n");
@@ -406,31 +408,8 @@ void afficherPli(Zone *memoirePtr,int *nbrLecteursPtr,int setSemaphonreIdData,in
     printf("Le pli est vide pour le moment ! \n");
   }
   for (i = premier ; i < premier + nbrCartesPli ; i++){
-    printf("\t%s - %d%s\n", joueurs[i%nbrJoueurs].name,pli[i%nbrCartesPli].valeur, lesSymboles[pli[i%nbrCartesPli].couleur]);
+    printf("\t%s - %d%s\n", joueurs[i%nbrJoueurs].name,pli[i%nbrJoueurs].valeur, lesSymboles[pli[i%nbrJoueurs].couleur]);
   }
   printf("\n");
 }
-/*
-int lecture(int sck,fd_set copieset){
-  fd_set fdSet;
-  FD_ZERO(&fdSet);
-  fdSet=copieset;
-  int nbreFd;
-  if((nbreFd=select(sck+1,&fdSet,NULL,NULL,NULL))<0){
-    perror("Erreur lors de l'ecoute au clavier ou sur le socket ...");
-    exit(15);
-  }
-  if(FD_ISSET(0,&fdSet)){
-    char buffer[256];
-    int nr;
-    if((nr=read(0,&buffer,sizeof(buffer)))<0){
-      perror("Erreur de la lecture au clavier ...");
-      exit(15);
-    }
-    if(strncmp(buffer,"SCORES",6)==0){
-      return 0;
-    }
 
-  }
-  return -1;
-}*/

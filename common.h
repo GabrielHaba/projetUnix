@@ -47,6 +47,8 @@
 
 	#define PERDANT 4
 
+	#define NBR_TOURS 3
+
 	#define  SYS(call) ((call) == -1) ?(perror(#call ":ERROR"),exit(1)) :0
 
 	struct joueur {

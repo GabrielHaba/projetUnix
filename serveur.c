@@ -15,7 +15,7 @@
 static int pret = FALSE;
 
 int main(int argc, char **argv){
-    int sck, port, sckJoueur, nbreLu, i, j, nbreFd, keySHData, keySHNbrLecteurs;
+    int sck, port, sckJoueur, nbreLu, i, j,k, nbreFd, keySHData, keySHNbrLecteurs;
     int shmidData, shmidNbrLecteurs, keySEM,keySEML, setSemIdData,setSemIdNbrLecteurs, nbrLecteurs;
     int reponseDesinscription, nbreToSend, nbrJoueurs = 0;
     Carte* jeuDeCarte ;
@@ -255,14 +255,19 @@ int main(int argc, char **argv){
     // BOUCLE AVEC NOMBRE DE CARTE PAR JOUEUR RESTANTES
     premier =  0;
     //prévenir les joueurs que le premier joueur est ...
-    for(i = 0; i < nbrJoueurs ; i++){
-      if (write(joueurs[i].fd, &premier, sizeof(int)) != sizeof(premier)) {
+    for(k=0; k < NBR_TOURS ; k++){
+       for(i = 0; i < nbrJoueurs ; i++){
+          if (write(joueurs[i].fd, &premier, sizeof(int)) != sizeof(int)) {
            perror("Erreur lors de l'envoi de l indice du premier joueur...\n");
            exit(77);
-      }
-    }
-    deroulementTour(&premier, nbrJoueurs,memoirePtr, joueurs, &setSemIdData,&setSemIdNbrLecteurs,nbrLecteursPtr);
+          }
+        }
+        deroulementTour(&premier, nbrJoueurs,memoirePtr, joueurs, &setSemIdData,&setSemIdNbrLecteurs,nbrLecteursPtr);
+        nbrCartesPli=0;
+        ecrireSharedM(memoirePtr,setSemIdData ,NBRE_CARTES_PLI, &nbrCartesPli, 0);
 
+    }
+   
 
     free(jeuDeCarte);
     system("./remove_ipc.sh");  /* Retrait des ipcs */
