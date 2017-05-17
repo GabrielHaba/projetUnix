@@ -28,7 +28,7 @@
 
 	void display_welcome();
 
-	void afficher_joueurs(Zone*, int*, int);
+	void afficher_joueurs(Zone*, int*, int,int);
 
 	void ecarterCartes(Carte**, Carte*, int);
 
@@ -38,8 +38,8 @@
 
 	int isValidNumber(char*);
 
-	void jouerTour(int, Carte**, int*, Zone*, int*, int,int);
+	void jouerTour(int, Carte**, int*, Zone*, int*, int,int,int);
 
-	void afficherPli(Zone *,int *,int,int);
+	void afficherPli(Zone *,int *,int,int,int);
 
 #endif

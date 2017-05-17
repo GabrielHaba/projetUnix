@@ -31,6 +31,8 @@
 
 	Couleur tiragePapayoo();
 
-	void deroulementTour(int *, int, Zone *, Joueur *, int*);
+	void deroulementTour(int *, int, Zone *, Joueur *, int *,int *, int *);
+
+	int determinerPerdant(Zone *,int *,int *,int *,int);
 
 #endif

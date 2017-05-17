@@ -16,13 +16,13 @@ static int pret = FALSE;
 
 int main(int argc, char **argv){
     int sck, port, sckJoueur, nbreLu, i, j, nbreFd, keySHData, keySHNbrLecteurs;
-    int shmidData, shmidNbrLecteurs, keySEM, setSemId, nbrLecteurs;
+    int shmidData, shmidNbrLecteurs, keySEM,keySEML, setSemIdData,setSemIdNbrLecteurs, nbrLecteurs;
     int reponseDesinscription, nbreToSend, nbrJoueurs = 0;
     Carte* jeuDeCarte ;
     Carte  ecarts[MAX_JOUEURS][TAILLE_ECART];
     Couleur couleurPayoo;
-    us sem_val_init[2]={1,1};
-    us sem_values[2];
+    us sem_val_init[1]={1};
+    us sem_values[1];
     Zone *memoirePtr;
     int *nbrLecteursPtr;
     int premier = 0;
@@ -148,12 +148,15 @@ int main(int argc, char **argv){
      * 1) Semaphores
      * ETAPE 1 --> Obtention de la cle */
     keySEM = ftok(".",1);
-
+    keySEML = ftok(".",4);
     /*ETAPE 2 --> Creation des semaphores */
-    setSemId = creerSemaphore(keySEM);
+    setSemIdData = creerSemaphore(keySEM);
+    setSemIdNbrLecteurs = creerSemaphore(keySEML);
+
 
     /*ETAPE 3 --> Initialisation des semaphores */
-    initSemaphore(setSemId,sem_val_init);
+    initSemaphore(setSemIdNbrLecteurs,sem_val_init);
+    initSemaphore(setSemIdData,sem_val_init);
 
     /* 2) Memoire partagee
      * ETAPE 1 --> Obtention des cles pour les deux shm */
@@ -172,8 +175,8 @@ int main(int argc, char **argv){
     nbrLecteurs = initNbrLecteurs(nbrLecteursPtr);
 
     /*ETAPE 5 --> Ecriture des donness dans la shm */
-    ecrireSharedM(memoirePtr, setSemId, NBRE_JOUEURS, &nbrJoueurs,0);
-    ecrireSharedM(memoirePtr, setSemId, JOUEURS, joueurs,0);
+    ecrireSharedM(memoirePtr, setSemIdData, NBRE_JOUEURS, &nbrJoueurs,0);
+    ecrireSharedM(memoirePtr, setSemIdData, JOUEURS, joueurs,0);
 
     /* Allocation de la zone memoire qui va contenir le deck */
     if ((jeuDeCarte = (Carte*)malloc(sizeof(Carte)*60)) == NULL){
@@ -237,7 +240,7 @@ int main(int argc, char **argv){
       }
     }
     //PROBLEME
-    ecrireSharedM(memoirePtr,setSemId ,NBRE_CARTES_PLI, &nbrCartesPli, 0);
+    ecrireSharedM(memoirePtr,setSemIdData ,NBRE_CARTES_PLI, &nbrCartesPli, 0);
 
     couleurPayoo = tiragePapayoo();
     /* On previent le joueur de la couleur Papayoo -------> shm? */
@@ -258,7 +261,7 @@ int main(int argc, char **argv){
            exit(77);
       }
     }
-    deroulementTour(&premier, nbrJoueurs,memoirePtr, joueurs, &setSemId);
+    deroulementTour(&premier, nbrJoueurs,memoirePtr, joueurs, &setSemIdData,&setSemIdNbrLecteurs,nbrLecteursPtr);
 
 
     free(jeuDeCarte);
@@ -289,8 +292,27 @@ Couleur tiragePapayoo(){
   return (int) (rand()/(RAND_MAX+1.0)*4);
 }
 
-
-void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueur *joueurs, int* setSemId){
+int determinerPerdant(Zone *memoirePtr,int *setSemIdData,int *setSemIdNbrLecteurs,int *nbrLecteursPtr,int premier){
+  printf("DETERMINERPERDANT\n");
+  Zone memoire = lireSharedM(memoirePtr, nbrLecteursPtr, *setSemIdData,*setSemIdNbrLecteurs);
+  int i;
+  Carte *pli = memoire.pli;
+  Joueur *joueurs = memoire.joueurs;
+  Couleur couleurPremiereCartePli=(pli[premier]).couleur;
+  printf("couleur %s\n",lesSymboles[couleurPremiereCartePli]);
+  int perdant=0;
+  int valeurMaxCouleurPremiereCartePli=-1;
+  for(i=0;i<NBRE_JOUEURS;i++){
+      printf("couleur carte %s\n",lesSymboles[pli[i].couleur]);
+      if(pli[i].couleur==couleurPremiereCartePli && pli[i].valeur>valeurMaxCouleurPremiereCartePli ){
+        valeurMaxCouleurPremiereCartePli=pli[i].valeur;
+        perdant=i;
+        printf("LE PERDANT EST %d\n",perdant);
+      }
+  }
+  return perdant;
+}
+void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueur *joueurs, int* setSemIdData,int *setSemIdNbrLecteurs,int *nbrLecteursPtr){
   int j, k, indexJoueur ;
   Carte carteJouee;
   int ton_tour = TON_TOUR;
@@ -313,11 +335,11 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
 
       /* Ecrire la carte en mémoire partagée à la position corresponde
        * à celle du joueur */
-      ecrireSharedM(memoirePtr, *setSemId, CARTES, &carteJouee, indexJoueur);
+      ecrireSharedM(memoirePtr, *setSemIdData, CARTES, &carteJouee, indexJoueur);
 
       nbrCartesPli++;
       /*Ecrire le nbre de cartes qu'il y a dans le pli*/
-      ecrireSharedM(memoirePtr, *setSemId, NBRE_CARTES_PLI, &nbrCartesPli, indexJoueur);
+      ecrireSharedM(memoirePtr, *setSemIdData, NBRE_CARTES_PLI, &nbrCartesPli, indexJoueur);
 
       /* Avertir tous les joueurs que le pli est consultable */
       for (k = 0; k < nbrJoueurs; k++) {
@@ -326,8 +348,9 @@ void deroulementTour(int *numPremierJoueur,int nbrJoueurs,Zone *memoirePtr,Joueu
           exit(13);
         }
       }
-  }
-
+    }
+  *numPremierJoueur = determinerPerdant(memoirePtr,setSemIdData,setSemIdNbrLecteurs,nbrLecteursPtr,*numPremierJoueur);
+  //printf("le perdant est %s\n",joueurs[*numPremierJoueur].name);
   // On indique que le tour est terminé...
   for (k = 0; k < nbrJoueurs; k++) {
     if (write(joueurs[k].fd, &fin_tour, sizeof(int)) != sizeof(int)) {

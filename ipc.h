@@ -53,7 +53,7 @@
 
 	int initNbrLecteurs(int *);
 
-	Zone lireSharedM(Zone *,int *, int);
+	Zone lireSharedM(Zone *,int *, int, int);
 
 	void ecrireSharedM(Zone*, int,int,void *,int);
 

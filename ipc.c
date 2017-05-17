@@ -49,31 +49,31 @@ int initNbrLecteurs(int *addrShmNbrLecteurs){
 }
 
 
-Zone lireSharedM(Zone *addrData, int *addrShmNbrLecteurs, int setSemaphonreId){
+Zone lireSharedM(Zone *addrData, int *addrShmNbrLecteurs, int setSemaphonreIdData,int setSemIdNbrLecteurs){
   int nbrLecteurs;
   Zone memoire;
-  SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
+  SYSDOWN(down(setSemIdNbrLecteurs,0));
   nbrLecteurs=((*addrShmNbrLecteurs)++);
   printf("nbrLecteurs apres incrementation : %d\n",  nbrLecteurs );
   if(nbrLecteurs==1){
-    SYSDOWN(down(setSemaphonreId,NUMSEMDATA));
+    SYSDOWN(down(setSemaphonreIdData,0));
   }
-  up(setSemaphonreId,NUMSEMNBRLECTEURS);
+  up(setSemIdNbrLecteurs,0);
   memoire=*addrData;
-  SYSDOWN(down(setSemaphonreId,NUMSEMNBRLECTEURS));
+  SYSDOWN(down(setSemIdNbrLecteurs,0));
   nbrLecteurs=((*addrShmNbrLecteurs)--);
     printf("nbrLecteurs apres decrementation : %d\n",  nbrLecteurs );
   if(nbrLecteurs==0){
-    up(setSemaphonreId,NUMSEMDATA);
+    up(setSemaphonreIdData,0);
   }
-  up(setSemaphonreId,NUMSEMNBRLECTEURS);
+  up(setSemIdNbrLecteurs,0);
   return memoire;
 }
 
 void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite,int positionEcriture) {
 
   int i = positionEcriture ;
-  if (down(semaphores, NUMSEMDATA) < 0) {
+  if (down(semaphores, 0) < 0) {
       printf("La mémoire n'est pas disponible pour le moment...\n");
       return ;
   }
@@ -99,7 +99,7 @@ void ecrireSharedM(Zone* shmAddr, int semaphores,int cas, void* toWrite,int posi
     return  ;
   }
 
-  if (up(semaphores, NUMSEMDATA) < 0) {
+  if (up(semaphores, 0) < 0) {
       printf("La mémoire n'est pas disponible pour le moment...\n");
       return ;
   }
@@ -118,7 +118,7 @@ int creerSemaphore(int key){
 }
 /*us correspond a unsigned short -> voir common.h*/
 void initSemaphore(int setSemId, us *sem_val_init){
-  if( semctl(setSemId,0,SETALL,sem_val_init) < 0 ){
+  if( semctl(setSemId,0,SETVAL,sem_val_init[0]) < 0 ){
     	perror("Erreur lors de l'initialisation des semaphores");
 		  exit(7);
 	}
@@ -131,13 +131,17 @@ void getValueSems(int setSemId, us *values){
 }
 
 int up(int setId,int numSemaphore){
-  struct sembuf operation={numSemaphore,1};
-  struct sembuf arrayOperations[1]={operation};
-  return semop(setId,arrayOperations,1);
+  struct sembuf operation;
+  operation.sem_num = 0;
+  operation.sem_op = 1 ;
+  operation.sem_flg = 0 ;
+  return semop(setId,&operation,1);
 }
 
 int down(int setId,int numSemaphore){
-  struct sembuf operation={numSemaphore,-1};
-  struct sembuf arrayOperations[1]={operation};
-  return semop(setId,arrayOperations,1);
+  struct sembuf operation;
+  operation.sem_num = 0;
+  operation.sem_op = -1 ;
+  operation.sem_flg = 0 ;
+  return semop(setId,&operation,1);
 }

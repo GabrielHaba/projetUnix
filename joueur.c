@@ -13,13 +13,13 @@
 
 
 int main(int argc, char** argv) {
-    int sck, port, nr, keySem, keyShData, keyShNbrLect, setSemId;
+    int sck, port, nr, keySem,keySemL, keyShData, keyShNbrLect, setSemIdData, setSemIdNbrLecteurs;
     int shmidData, shmidNbrLecteurs, i, nbrJoueurs, nbrCartes ;
     Carte* mesCartes ;
     Carte ecartee[5] ;
     Couleur couleurPayoo;
-    us sem_val_init[2]={1,1};
-    us sem_values[2];
+    us sem_val_init[1]={1};
+    us sem_values[1];
     struct sockaddr_in addr;
 	  struct hostent *host;
     char reponseServer[256];
@@ -99,13 +99,13 @@ int main(int argc, char** argv) {
     /* 1) Semaphores */
     /* ETAPE 1 --> Obtenir une clé pour les semaphores */
     keySem = ftok(".",1);
-
+    keySemL = ftok(".",4);
     /* ETAPE 2 --> Creation des semaphores */
-    setSemId = creerSemaphore(keySem);
-
+    setSemIdData = creerSemaphore(keySem);
+    setSemIdNbrLecteurs = creerSemaphore(keySemL);
     /* ETAPE 3 --> Initialisation des semaphores */
-    initSemaphore(setSemId, sem_val_init);
-
+    initSemaphore(setSemIdData, sem_val_init);
+    initSemaphore(setSemIdNbrLecteurs, sem_val_init);
     /* 2) Memoire partagee */
     /* ETAPE 1 --> Obtenir une clé pour la SH */
     keyShData = ftok(".",2);
@@ -121,10 +121,10 @@ int main(int argc, char** argv) {
     nbrLecteursPtr = (int *) attacherSharedM(shmidNbrLecteurs);
 
     /*ETAPE 4 -> Lecture dans la memoire */
-    memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemId);
+    memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemIdData,setSemIdNbrLecteurs);
     nbrJoueurs = memoire.nbrJoueurs ;
 
-    afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
+    afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs);
 
     /* ========================== */
     /* === Debut d'une manche === */
@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
       perror("Erreur de reception de l indice du premier joueur...\n");
       exit(3);
   }
-  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemId, premier);
+  jouerTour(sck, &mesCartes, &nbrCartes, memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs, premier);
 
  exit(0);
 }
@@ -215,10 +215,10 @@ void display_welcome(){
     printf("======================================\n");
 }
 
-void afficher_joueurs(Zone* memoirePtr, int* nbrLecteursPtr, int setSemId){
+void afficher_joueurs(Zone* memoirePtr, int* nbrLecteursPtr, int setSemIdData,int setSemIdNbrLecteurs){
 	Zone memoire ;
 	int nbrJoueurs, i;
-	memoire = lireSharedM(memoirePtr, nbrLecteursPtr, setSemId);
+	memoire = lireSharedM(memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs);
 	nbrJoueurs = memoire.nbrJoueurs ;
 	printf("\n\n=== Tableau des scores ===\n\n");
 	printf("Joueurs\t\tmanche 1\tmanche 2\tmanche 3\n");
@@ -269,24 +269,9 @@ int isValidNumber(char* string){
 }
 
 
-int lectureChoix(){
-  char buffer[SIZE];
-  int nr;
-  printf("\n=== ACTIONS ===\n\t1 - Afficher les scores\n\t2 - Consulter le pli en cours\n\t3 - Continuer le jeu\n");
-  while (TRUE){
-    printf("Votre choix : ");
-    fflush(0);
-    if ((fgets(buffer, SIZE, stdin) != NULL && isValidNumber(buffer))){
-      nr = atoi(buffer);
-      if (nr > 0 && nr < 4){
-        return nr ;
-      }
-    }
-  }
-}
 
 
-void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemId,int premier){
+void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int* nbrLecteursPtr, int setSemIdData,int setSemIdNbrLecteurs,int premier){
     fd_set fdSet, copieset ;
     int nbreFd, action, index, toDo ;
     Carte carte ;
@@ -325,10 +310,10 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
             }
             toDo = atoi(input);
             if (toDo == SCORES) {
-              afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemId);
+              afficher_joueurs(memoirePtr, nbrLecteursPtr, setSemIdData,setSemIdNbrLecteurs);
             }
             else { // Afficher le pli
-              afficherPli(memoirePtr,nbrLecteursPtr,setSemId,premier);
+              afficherPli(memoirePtr,nbrLecteursPtr,setSemIdData,setSemIdNbrLecteurs,premier);
             }
           } /* Fin input joueur */
           /* CAS OU LE SERVEUR SIGNALE AU JOUEUR QUE C'EST SON TOUR === */
@@ -348,7 +333,7 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
               printf("\n=== Ma main ===\n");
               afficherCartes(*mesCartes, *nbrCartes);
               printf("Pli courant : \n");
-              afficherPli(memoirePtr,nbrLecteursPtr,setSemId,premier);
+              afficherPli(memoirePtr,nbrLecteursPtr,setSemIdData,setSemIdNbrLecteurs,premier);
               /* Lecture du numero de la carte a envoyer */
               while(TRUE){
                 printf("\nChoississez une carte à joueur : ");
@@ -381,8 +366,8 @@ void jouerTour(int sck, Carte** mesCartes, int* nbrCartes, Zone* memoirePtr, int
       }
     }
 }
-void afficherPli(Zone *memoirePtr,int *nbrLecteursPtr,int setSemaphonreId, int premier){
-  Zone memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemaphonreId);
+void afficherPli(Zone *memoirePtr,int *nbrLecteursPtr,int setSemaphonreIdData,int setSemIdNbrLecteurs, int premier){
+  Zone memoire = lireSharedM(memoirePtr,nbrLecteursPtr,setSemaphonreIdData,setSemIdNbrLecteurs);
   Joueur *joueurs = memoire.joueurs;
   Carte *pli = memoire.pli;
   int nbrCartesPli = memoire.nbrCartesPli;
