@@ -13,7 +13,7 @@
 
 	#define _SERVEUR_H_
 
- 	#define NBR_SEC 30
+ 	#define NBR_SEC 5
 
 	#define SIZE 256
 
@@ -31,6 +31,8 @@
 
 	Couleur tiragePapayoo();
 
-	void deroulementTour(int *, int, Zone *, Joueur *, int*);
+	void deroulementTour(int *, int, Zone *, Joueur *, int *,int *, int *);
+
+	int determinerPerdant(int, Zone *,int *,int *,int *,int);
 
 #endif

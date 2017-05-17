@@ -33,12 +33,6 @@
 
 	#define A_ECARTER 5
 
-	#define TON_TOUR 0
-
-	#define PLI_CONSULTABLE 1
-
-	#define FIN_TOUR 2
-
 	#define NBRE_MANCHE 3
 
 	#define STDIN 0
@@ -48,6 +42,12 @@
 	#define PLI_CONSULTABLE 1
 
 	#define FIN_TOUR 2
+	
+	#define AVERT_PERDANT 3
+
+	#define PERDANT 4
+
+	#define NBR_TOURS 3
 
 	#define  SYS(call) ((call) == -1) ?(perror(#call ":ERROR"),exit(1)) :0
 

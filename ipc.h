@@ -34,9 +34,12 @@
 
 	#define CARTES 2
 
+	#define NBRE_CARTES_PLI 3
+
 	typedef struct zone{
 		int nbrJoueurs ;
 		Joueur joueurs[4];
+		int nbrCartesPli;
 		Carte pli[4];
 	} Zone;
 
@@ -50,7 +53,7 @@
 
 	int initNbrLecteurs(int *);
 
-	Zone lireSharedM(Zone *,int *, int);
+	Zone lireSharedM(Zone *,int *, int, int);
 
 	void ecrireSharedM(Zone*, int,int,void *,int);
 
